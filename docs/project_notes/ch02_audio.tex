@@ -1,0 +1,140 @@
+\chapter{From Sound to Numbers: Digital Audio and the Log-Mel Spectrogram}
+\chaptermark{Digital Audio and Log-Mel Features}
+\label{ch:audio}
+
+A neural network needs a tensor. This chapter builds, step by step, the exact tensor Whisper reads.
+
+\section{Sampling}
+
+Sound is a pressure wave $x_c(\tau)$, a function of continuous time $\tau$. A microphone and an analogue-to-digital converter
+record it at equally spaced instants.
+
+\begin{definition}{Sampled signal}{sampling}
+With sampling rate $f_s$ (samples per second), the digital signal is $x[n]=x_c(n/f_s)$, $n=0,1,\dots,N-1$, stored as
+floating-point numbers in $[-1,1]$. A clip of duration $D$ seconds has $N=f_sD$ samples.
+\end{definition}
+
+\begin{theorem}{Nyquist--Shannon (statement only)}{nyquist}
+If $x_c$ contains no frequency above $f_{\max}$, it is exactly recoverable from its samples whenever $f_s>2f_{\max}$. Frequencies
+above $f_s/2$ (the Nyquist frequency) \emph{alias}: they reappear as false lower frequencies.
+\end{theorem}
+
+Whisper uses $f_s=16{,}000$ Hz, so it sees frequencies up to 8 kHz. That covers what matters for intelligibility (most speech
+energy is below 4 kHz; fricatives like ``s'' reach 6--8 kHz). Our corpora come at 16, 22.05, 44.1 or 48 kHz, so every file is
+\emph{resampled} to 16 kHz once, in \file{build_manifests.py}.
+
+\begin{incode}
+\file{build_manifests.py: to16k} averages stereo channels to mono and resamples with \texttt{scipy.signal.resample\_poly(x, 16000/g,
+sr/g)} where $g=\gcd(\text{sr},16000)$. Polyphase resampling upsamples by an integer, low-pass filters (anti-aliasing, so
+Theorem~\ref{thm:nyquist} is respected) and downsamples by an integer. Everything is saved as 16 kHz mono FLAC (lossless): 467{,}515
+utterances, 42 GB.
+\end{incode}
+
+\begin{exercise}{Why not just drop every third sample to go from 48 kHz to 16 kHz?}{dropsamples}
+\textit{Solution.} Dropping samples is resampling without a low-pass filter. Any energy between 8 and 24 kHz in the 48 kHz recording
+would alias into the 0--8 kHz band and add false components. \texttt{resample\_poly} filters first. (The demo, in contrast, uses
+plain linear interpolation \texttt{np.interp}, which has no anti-alias filter; this is noted as a known limitation.)
+\end{exercise}
+
+\section{Short-time Fourier transform}
+
+Speech is not stationary: the frequencies change every few tens of milliseconds as the mouth moves. So we analyse short
+overlapping windows.
+
+\begin{definition}{Short-time Fourier transform (STFT)}{stft}
+Choose a window length $N_w$, a hop $H$ and a window function $w[n]$ (Whisper: Hann, $w[n]=\sin^2(\pi n/N_w)$). Frame $m$ starts at
+sample $mH$. Its discrete Fourier transform is
+\[
+X[m,k]=\sum_{n=0}^{N_w-1} x[mH+n]\,w[n]\,e^{-2\pi i kn/N_w},\qquad k=0,\dots,N_w/2 .
+\]
+The \emph{power spectrogram} is $P[m,k]=|X[m,k]|^2$. Bin $k$ corresponds to frequency $k f_s/N_w$ Hz.
+\end{definition}
+
+Whisper uses $N_w=400$ samples (25 ms) and $H=160$ samples (10 ms), so there are 100 frames per second and $201$ frequency bins
+$k=0,\dots,200$, spaced $16000/400=40$ Hz apart.
+
+\begin{intuition}[: why a window function]
+Cutting a frame with a rectangular window creates sharp jumps at the frame edges, and the DFT treats the frame as periodic, so these
+jumps leak energy into all frequencies (``spectral leakage''). The Hann window goes smoothly to zero at both ends and greatly
+reduces leakage.
+\end{intuition}
+
+\section{The mel scale and the log}
+
+Humans resolve low frequencies finely and high frequencies coarsely. The mel scale models this:
+\[
+\mathrm{mel}(f)=2595\log_{10}\!\Big(1+\frac{f}{700}\Big).
+\]
+It is roughly linear below 1 kHz and logarithmic above.
+
+\begin{definition}{Mel filterbank and log-mel spectrogram}{logmel}
+Place $M$ points equally spaced on the mel axis between 0 and $\mathrm{mel}(8000)$, convert them back to Hz, and build triangular
+filters $H_j[k]$ that rise from point $j-1$ to point $j$ and fall to point $j+1$. The mel energies are
+$\mathcal M[j,m]=\sum_k H_j[k]\,P[m,k]$. Whisper then computes
+\[
+L=\log_{10}\max(\mathcal M,10^{-10}),\qquad L\leftarrow\max\big(L,\ \max(L)-8\big),\qquad \bm F=\frac{L+4}{4}.
+\]
+\end{definition}
+
+The three operations after the filterbank have clear purposes:
+\begin{enumerate}
+\item The $\log$ turns multiplicative gain (a louder speaker, a different microphone) into an additive offset, and compresses the
+huge dynamic range of audio power.
+\item Clamping at $\max(L)-8$ keeps only the top 8 orders of magnitude (80 dB) of the clip; quieter values are floored.
+\item $(L+4)/4$ roughly centres and scales the values to about $[-1,1]$, which suits the first convolution layer.
+\end{enumerate}
+
+Whisper-small uses $M=80$ mel bands; large-v3 and large-v3-turbo use $M=128$.
+
+\section{The fixed 30-second window}
+
+Whisper always processes exactly 30 s: shorter audio is padded with zeros, longer audio is cut. So the input is always
+$\bm F\in\R^{M\times 3000}$ (30 s $\times$ 100 frames/s).
+
+The encoder starts with two 1-D convolutions (kernel 3, GELU); the second has stride 2. So 3000 mel frames become \textbf{1500 encoder
+frames, one per 20 ms, i.e.\ 50 per second.}
+
+\begin{proposition}{Number of valid encoder frames}{encframes}
+A clip of $n$ samples ($n/16000$ seconds) occupies $T=\min\!\big(1500,\ \lfloor 50\,n/16000\rfloor+1\big)$ encoder frames; the
+remaining $1500-T$ frames see only padding.
+\end{proposition}
+\begin{proof}
+Mel frames come every 10 ms, encoder frames every 20 ms, i.e.\ 50 per second. A clip of $D$ seconds covers encoder frames
+$0,1,\dots,\lfloor 50D\rfloor$, which is $\lfloor 50D\rfloor+1$ frames, capped at the 1500 available.
+\end{proof}
+
+\begin{incode}
+\file{common.py: enc_frames(n_samples)} implements exactly this formula. It is used everywhere a per-clip ``valid length'' is
+needed: the LID-CTC loss (Chapter~\ref{ch:ctc}) runs only over valid frames, the LID head sums posteriors only over valid frames,
+and SpecAugment masks are placed only inside the valid region (mel length $=2T$).
+\end{incode}
+
+\begin{example}{Shapes for one 6.4-second Hindi clip}{shapes}
+$n=6.4\times16000=102{,}400$ samples. STFT frames: $\approx 640$ real frames, padded to 3000. Mel: $128\times 3000$. Encoder:
+$1500\times1280$, of which $T=\lfloor 50\cdot 6.4\rfloor+1=321$ frames carry speech. The LID head sees $321$ valid frames.
+\end{example}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[node distance=0.55cm and 0.5cm, every node/.style={font=\small},
+  box/.style={draw, rounded corners, align=center, fill=defc!8, minimum height=0.9cm}]
+\node[box] (wav) {waveform\\$x[n]$, 16 kHz};
+\node[box, right=of wav] (stft) {STFT\\25 ms / 10 ms};
+\node[box, right=of stft] (mel) {128 mel\\filters, log};
+\node[box, right=of mel] (pad) {pad to 30 s\\$128\times3000$};
+\node[box, right=of pad] (conv) {2 conv\\(stride 2)};
+\node[box, below=0.8cm of conv] (enc) {32 Transformer\\layers};
+\node[box, left=of enc] (out) {$1500\times1280$\\encoder states};
+\draw[-Stealth] (wav)--(stft); \draw[-Stealth] (stft)--(mel); \draw[-Stealth] (mel)--(pad); \draw[-Stealth] (pad)--(conv);
+\draw[-Stealth] (conv)--(enc); \draw[-Stealth] (enc)--(out);
+\end{tikzpicture}
+\caption{Whisper large-v3-turbo front end, from waveform to encoder states.}
+\end{figure}
+
+\begin{exercise}{A 27-second Telugu clip}{ex27}
+How many valid encoder frames does it have, and how many \emph{text tokens} might it need if Telugu costs up to 45 Whisper tokens
+per second?\par
+\textit{Solution.} $T=\lfloor 50\cdot 27\rfloor+1=1351$. Text: up to $27\times 45=1215$ tokens, far above the decoder's 448-position
+limit. Such an utterance cannot be transcribed in one pass; this is why training drops utterances over 440 text tokens and the demo
+cuts audio into chunks of at most 12 s (Chapters~\ref{ch:whisper} and \ref{ch:demo}).
+\end{exercise}

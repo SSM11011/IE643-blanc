@@ -1,0 +1,142 @@
+\chapter{The Indian-English Regression and Two Decode-Time Fixes}
+\chaptermark{The Indian-English Regression}
+\label{ch:svarah}
+
+\section{The symptom}
+
+Svarah is Indian-accented English (117 speakers from 65 districts). Vanilla turbo transcribes it at CER 0.032 and identifies it as
+English 99\% of the time. After fine-tuning:
+\begin{itemize}
+\item token LID 0.13 (head 0.25): Svarah is now mostly called Hindi, Telugu, Bengali, Odia\dots;
+\item even with \tok{en} forced (oracle), CER 0.227; with predicted LID, 0.737.
+\end{itemize}
+
+\section{Diagnosis from the per-utterance hypotheses}
+
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+Subset of the 100 Svarah test utterances (oracle \tok{en}) & $n$ & Stage 2 CER & vanilla CER\\
+\midrule
+hypothesis contains non-Latin script & 39 & 0.715 & 0.059\\
+reference contains digits & 12 & 0.585 & 0.040\\
+rest & 55 & 0.048 & 0.023\\
+\bottomrule
+\end{tabular}
+\end{center}
+(6 utterances are in both of the first two rows.)
+
+Two mechanisms:
+\begin{enumerate}
+\item \textbf{Script leakage.} In 39\% of utterances, even when told ``English'', the model writes English words in Bengali, Telugu or
+Devanagari script. The training mix contains no Indian-accented English: the only English is LibriSpeech (American/British audiobooks)
+and FLEURS. Indian-accented English is acoustically closer to the Indic training data (and to the English words inside MUCS, which
+are often written in Indic script) than to LibriSpeech, so the model maps it to Indic outputs.
+\item \textbf{Number style.} References use digits (``25''); the model, like LibriSpeech, spells numbers out (``twenty five''). The
+normaliser does not verbalise digits (Chapter~\ref{ch:metrics}), so this counts as errors.
+\end{enumerate}
+
+\begin{intuition}[: catastrophic forgetting, in its classic form]
+Vanilla Whisper handled Indian English well because its 680{,}000-hour pretraining included it. Our fine-tuning distribution
+contained none, and nothing in the objective rewarded keeping that ability. Fine-tuning optimises the training mixture; abilities
+outside it are free to drift.
+\end{intuition}
+
+\section{Fix 1: ASCII-only English decoding}
+
+\begin{definition}{Logit masking}{mask}
+Let $\mathcal A\subset\{1..V\}$ be the tokens whose decoded string is pure ASCII. When decoding with \tok{en}, set $z_{t,v}=-\infty$ for
+$v\notin\mathcal A$ at every step. Then
+\[
+\tilde p(v\mid\cdot)=\frac{e^{z_v}\1[v\in\mathcal A]}{\sum_{u\in\mathcal A}e^{z_u}}=p(v\mid\cdot,\ v\in\mathcal A),
+\]
+the model's distribution \emph{conditioned} on producing an ASCII token.
+\end{definition}
+
+11{,}707 vocabulary tokens are not pure ASCII. The effect is surgical: Svarah oracle CER $0.227\to\mathbf{0.114}$, and no other English
+or MUCS set changes (MUCS is decoded with \tok{hi}/\tok{bn}, not \tok{en}).
+
+\section{Fix 2: a calibrated LID rule}
+
+Fix 1 only helps if \tok{en} is chosen. The second fix improves the decision itself by combining three pieces of evidence.
+
+\begin{definition}{Calibrated LID score}{rule}
+For each $\ell\in\mathcal L$,
+\[
+\mathrm{score}(\ell)=\log\hat p_{\text{tok}}(\ell\mid\vx)+b\cdot\1[\ell=\text{en}]+w\cdot\log q(\ell\mid\vx),\qquad
+\hat\ell=\argmax_\ell\mathrm{score}(\ell),
+\]
+where $\hat p_{\text{tok}}$ is the closed-set token probability (Definition~\ref{def:tokenlid}) and $q$ the normalised head mass
+(Chapter~\ref{ch:ctc}, clamped at $10^{-6}$).
+\end{definition}
+
+\begin{proposition}{The rule is a weighted product of experts}{poe}
+$\hat\ell=\argmax_\ell\ \hat p_{\text{tok}}(\ell)\,q(\ell)^{w}\,e^{b\1[\ell=\text{en}]}$, i.e.\ the argmax of the normalised
+distribution $\pi(\ell)\propto\hat p_{\text{tok}}(\ell)\,q(\ell)^w\,e^{b\1[\ell=\text{en}]}$.
+\end{proposition}
+\begin{proof}
+$\exp$ is increasing, so $\argmax$ of the score equals $\argmax$ of its exponential, which is the product. Normalising by a positive
+constant does not change the argmax.
+\end{proof}
+
+$w$ sets how much the encoder head is trusted relative to the decoder token; $b$ is a prior log-odds shift toward English.
+
+\paragraph{Fitting.} A grid $w\in\{0,0.25,0.5,1,2\}$, $b\in\{0,0.25,\dots,30\}$ (605 points). Objective: \emph{macro} LID accuracy over
+the calibration sets, ties broken toward the smallest change ($-|b|-w$). Calibration data: the dev split (100 per set) plus a
+\textbf{speaker-disjoint Svarah calibration set}: Svarah has no speaker ids, so a speaker is approximated by the demographic profile
+(gender, age group, native state and district, qualification, occupation; 115 profiles). All profiles occurring in the 100 scored test
+utterances are excluded; 300 utterances from 54 remaining profiles are used. The test split is never used for fitting.
+
+\paragraph{Result.} $b=22.25$, $w=2.0$; calibration macro LID $0.900\to0.919$.
+
+\begin{example}{What $b=22.25$ means}{bmeaning}
+In probability terms the English prior is multiplied by $e^{22.25}\approx4.6\times10^{9}$. That sounds absurd, but the grid search
+kept gaining calibration accuracy as $b$ grew to this size. An utterance flips to English only if its score gap
+$\mathrm{score}(\ell_{\text{win}})-\mathrm{score}(\text{en})$ without the bias is below $b$, so many Svarah utterances must have had
+gaps of the order of 20 nats: the fine-tuned token is extremely over-confident. Yet on genuine Indic speech the gap in favour of the
+true language is evidently even larger, because the same shift almost never flips a correct answer: on test no set loses more than
+0.02 LID accuracy.
+\end{example}
+
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+Test set & LID before & LID after & pred.\ CER before & pred.\ CER after\\
+\midrule
+Svarah en & 0.13 & 0.51 & 0.737 & 0.311\\
+IndicVoices as & 0.66 & 0.77 & 0.224 & 0.186\\
+IndicVoices bn & 0.77 & 0.78 & 0.159 & 0.143\\
+Lahaja hi & 0.77 & 0.78 & 0.152 & 0.147\\
+\bottomrule
+\end{tabular}
+\end{center}
+Mean predicted-LID CER over 23 sets: $0.147\to0.126$.
+
+\begin{vivatip}[: honest caveats about the calibration]
+(1) $w=2.0$ is the edge of the grid; but the macro gain from $w=0.5$ to $2$ is only 0.003, so extending the grid would change little.
+(2) The calibration Svarah utterances come from the Svarah corpus itself (different speakers, same recording conditions), so the
+fix is tuned to this kind of accent and microphone. (3) Speakers are approximated by profile; two people with the same profile would
+be merged (conservative for disjointness).
+\end{vivatip}
+
+\section{What would fix it properly}
+
+Svarah is still far behind vanilla (0.311 vs 0.032). The decode-time fixes treat the symptom. A real fix changes training:
+\begin{itemize}
+\item add Indian-accented English to the mix (Svarah-like data, NPTEL lecture audio);
+\item or a \emph{rehearsal / distillation} term that keeps the fine-tuned model's English outputs close to the vanilla model's, e.g.\
+add $\beta\,\mathrm{KL}\big(p_{\text{vanilla}}(\cdot\mid\vx)\,\|\,p_\theta(\cdot\mid\vx)\big)$ on English audio;
+\item and verbalise digits consistently in references and targets.
+\end{itemize}
+Each needs a retraining run of about a day.
+
+\begin{incode}
+\file{eval_whisper.py --en_ascii --lid_rule runs/s2_turbo/lid_rule.json}; \file{make_svarah_calib.py} builds the calibration set;
+\file{lid_calib.py} fits $(b,w)$ and writes \file{lid_rule.json}. The demo uses both fixes.
+\end{incode}
+
+\begin{exercise}{Why must the Svarah calibration utterances be speaker-disjoint from the scored ones?}{calibdisj}
+\textit{Solution.} $b$ is fitted to maximise accuracy on the calibration set. If the scored test speakers were in it, $b$ could be
+tuned to those speakers' voices and the reported test improvement (0.13 $\to$ 0.51) would be optimistic: the same test-set
+contamination that speaker-disjoint splits prevent in training (Chapter~\ref{ch:data}).
+\end{exercise}

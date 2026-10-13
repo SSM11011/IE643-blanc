@@ -1,0 +1,33 @@
+Loading weights:   0%|          | 0/479 [00:00<?, ?it/s]Loading weights:  25%|██▌       | 122/479 [00:00<00:00, 1203.94it/s]Loading weights:  51%|█████     | 243/479 [00:00<00:00, 1112.33it/s]Loading weights:  74%|███████▍  | 355/479 [00:00<00:00, 1105.49it/s]Loading weights: 100%|██████████| 479/479 [00:00<00:00, 1330.53it/s]
+[transformers] The new embeddings will be initialized from a multivariate normal distribution that has old embeddings' mean and covariance. As described in this article: https://nlp.stanford.edu/~johnhew/vocab-expansion.html. To disable this, use `mean_resizing=False`
+mode lora lr 0.0005 trainable 51.5M / 254.7M (20.2%) langs ['hi', 'en', 'te', 'as', 'or', 'bn', 'mr']
+train utts 349592 hours 700.0 by lang {'bn': 61821, 'or': 54919, 'mr': 42570, 'en': 27288, 'hi': 74660, 'as': 40315, 'te': 48019}
+W1003 17:57:38.445000 453043 torch/_inductor/utils.py:1806] [15/0] Not enough SMs to use max_autotune_gemm mode
+step 1/400 loss 2.3718 lr 2.50e-05 2.7 utt/s  mem 42.3GB  lid-ctc 2.4008
+step 20/400 loss 2.0169 lr 2.63e-04 11.2 utt/s  mem 42.6GB  lid-ctc 1.6604
+step 40/400 loss 1.2889 lr 5.00e-04 13.0 utt/s  mem 42.6GB  lid-ctc 0.0217
+step 60/400 loss 1.0066 lr 4.72e-04 13.9 utt/s  mem 42.6GB  lid-ctc 0.0166
+step 80/400 loss 0.7986 lr 4.44e-04 14.3 utt/s  mem 42.6GB  lid-ctc 0.0140
+step 100/400 loss 0.7031 lr 4.17e-04 14.6 utt/s  mem 42.6GB  lid-ctc 0.0142
+step 120/400 loss 0.6693 lr 3.89e-04 14.8 utt/s  mem 42.6GB  lid-ctc 0.0123
+step 140/400 loss 0.6171 lr 3.61e-04 15.0 utt/s  mem 42.6GB  lid-ctc 0.0125
+step 160/400 loss 0.5802 lr 3.33e-04 15.0 utt/s  mem 42.6GB  lid-ctc 0.0118
+step 180/400 loss 0.6137 lr 3.06e-04 15.1 utt/s  mem 42.6GB  lid-ctc 0.0115
+step 200/400 loss 0.5451 lr 2.78e-04 15.2 utt/s  mem 42.6GB  lid-ctc 0.0099
+[transformers] The attention mask is not set with a batched input, and cannot be inferred from input because pad token is same as eos token. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer WhisperTokenizer. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+[eval step200] {'fleurs/as': 'CER 0.282 WER 0.769 LID 0.85 LIDhead 0.00 loop 0.02', 'fleurs/bn': 'CER 0.238 WER 0.715 LID 1.00 LIDhead 0.98 loop 0.06', 'fleurs/en': 'CER 0.046 WER 0.092 LID 1.00 LIDhead 0.27 loop 0.00', 'fleurs/hi': 'CER 0.164 WER 0.386 LID 0.98 LIDhead 1.00 loop 0.00', 'fleurs/mr': 'CER 0.235 WER 0.728 LID 0.96 LIDhead 0.12 loop 0.00', 'fleurs/or': 'CER 0.285 WER 0.780 LID 0.00 LIDhead 0.19 loop 0.15', 'fleurs/te': 'CER 0.250 WER 0.798 LID 1.00 LIDhead 0.96 loop 0.00', 'indicvoices/as': 'CER 0.633 WER 1.164 LID 0.48 LIDhead 0.00 loop 0.06', 'indicvoices/bn': 'CER 0.516 WER 0.934 LID 0.67 LIDhead 0.29 loop 0.08', 'indicvoices/hi': 'CER 0.270 WER 0.579 LID 0.96 LIDhead 0.92 loop 0.00', 'indicvoices/mr': 'CER 0.333 WER 0.767 LID 0.73 LIDhead 0.02 loop 0.04', 'indicvoices/or': 'CER 0.513 WER 1.003 LID 0.02 LIDhead 0.46 loop 0.15', 'indicvoices/te': 'CER 0.439 WER 0.875 LID 0.90 LIDhead 0.79 loop 0.10', 'kathbath/bn': 'CER 0.198 WER 0.605 LID 1.00 LIDhead 0.92 loop 0.02', 'kathbath/hi': 'CER 0.208 WER 0.565 LID 0.96 LIDhead 0.96 loop 0.00', 'kathbath/mr': 'CER 0.248 WER 0.773 LID 0.85 LIDhead 0.19 loop 0.00', 'kathbath/or': 'CER 0.222 WER 0.717 LID 0.21 LIDhead 0.56 loop 0.00', 'kathbath/te': 'CER 0.266 WER 0.830 LID 1.00 LIDhead 0.96 loop 0.02', 'librispeech/en': 'CER 0.015 WER 0.046 LID 1.00 LIDhead 0.10 loop 0.00'}
+step 220/400 loss 0.5579 lr 2.50e-04 11.1 utt/s  mem 42.6GB  lid-ctc 0.0105
+step 240/400 loss 0.5287 lr 2.22e-04 11.4 utt/s  mem 42.6GB  lid-ctc 0.0113
+step 260/400 loss 0.5119 lr 1.94e-04 11.6 utt/s  mem 42.6GB  lid-ctc 0.0103
+step 280/400 loss 0.5253 lr 1.67e-04 11.9 utt/s  mem 42.6GB  lid-ctc 0.0089
+step 300/400 loss 0.5056 lr 1.39e-04 12.1 utt/s  mem 42.6GB  lid-ctc 0.0104
+step 320/400 loss 0.4976 lr 1.11e-04 12.2 utt/s  mem 42.6GB  lid-ctc 0.0099
+step 340/400 loss 0.4900 lr 8.33e-05 12.4 utt/s  mem 42.6GB  lid-ctc 0.0089
+step 360/400 loss 0.5003 lr 5.56e-05 12.6 utt/s  mem 42.6GB  lid-ctc 0.0091
+step 380/400 loss 0.4655 lr 2.78e-05 12.7 utt/s  mem 42.6GB  lid-ctc 0.0084
+step 400/400 loss 0.4619 lr 0.00e+00 12.8 utt/s  mem 42.6GB  lid-ctc 0.0092
+[eval final] {'fleurs/as': 'CER 0.259 WER 0.709 LID 0.81 LIDhead 0.00 loop 0.04', 'fleurs/bn': 'CER 0.206 WER 0.606 LID 1.00 LIDhead 0.94 loop 0.06', 'fleurs/en': 'CER 0.044 WER 0.086 LID 1.00 LIDhead 0.96 loop 0.00', 'fleurs/hi': 'CER 0.141 WER 0.352 LID 0.98 LIDhead 0.98 loop 0.00', 'fleurs/mr': 'CER 0.224 WER 0.681 LID 1.00 LIDhead 0.73 loop 0.00', 'fleurs/or': 'CER 0.258 WER 0.683 LID 0.58 LIDhead 0.15 loop 0.17', 'fleurs/te': 'CER 0.219 WER 0.717 LID 1.00 LIDhead 0.96 loop 0.00', 'indicvoices/as': 'CER 0.593 WER 1.107 LID 0.44 LIDhead 0.02 loop 0.06', 'indicvoices/bn': 'CER 0.511 WER 0.975 LID 0.54 LIDhead 0.17 loop 0.08', 'indicvoices/hi': 'CER 0.239 WER 0.531 LID 0.96 LIDhead 0.54 loop 0.00', 'indicvoices/mr': 'CER 0.229 WER 0.657 LID 0.77 LIDhead 0.40 loop 0.00', 'indicvoices/or': 'CER 0.409 WER 0.823 LID 0.65 LIDhead 0.85 loop 0.08', 'indicvoices/te': 'CER 0.400 WER 0.828 LID 0.88 LIDhead 0.60 loop 0.10', 'kathbath/bn': 'CER 0.129 WER 0.518 LID 1.00 LIDhead 1.00 loop 0.00', 'kathbath/hi': 'CER 0.191 WER 0.537 LID 0.94 LIDhead 0.88 loop 0.00', 'kathbath/mr': 'CER 0.242 WER 0.735 LID 0.94 LIDhead 0.71 loop 0.00', 'kathbath/or': 'CER 0.196 WER 0.648 LID 1.00 LIDhead 0.19 loop 0.00', 'kathbath/te': 'CER 0.209 WER 0.803 LID 1.00 LIDhead 0.98 loop 0.00', 'librispeech/en': 'CER 0.015 WER 0.046 LID 1.00 LIDhead 0.44 loop 0.00'}
+/home/shibam/IE643/.venv/lib/python3.12/site-packages/peft/utils/save_and_load.py:327: UserWarning: Setting `save_embedding_layers` to `True` as the embedding layer has been resized during finetuning.
+  warnings.warn(
+DONE /home/shibam/IE643/runs/embchk_5e-5

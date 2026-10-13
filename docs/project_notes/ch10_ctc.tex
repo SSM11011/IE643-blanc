@@ -1,0 +1,153 @@
+\chapter{The Encoder LID-CTC Head: Connectionist Temporal Classification}
+\chaptermark{The LID-CTC Head}
+\label{ch:ctc}
+
+The decoder's LID uses only one softmax at the first decoder step. The literature (ML-SUPERB 2.0, Interspeech 2025) found that an
+\emph{auxiliary LID loss on the encoder} improves LID markedly. This chapter builds the CTC loss from scratch, specialises it to
+our one-label case, and shows how it is attached to Whisper.
+
+\section{CTC in general}
+
+CTC (Graves et al., 2006) trains a frame-wise classifier when we know the label \emph{sequence} but not which frames correspond to
+which label.
+
+\begin{definition}{Alignments and the collapse map}{collapse}
+Let $\mathcal C$ be the label set and $\blank$ a special \emph{blank}. An \emph{alignment} of length $T$ is
+$\bm\pi=(\pi_1,\dots,\pi_T)\in(\mathcal C\cup\{\blank\})^T$. The collapse map $\mathcal B$ first merges consecutive repeats, then
+deletes blanks. Example: $\mathcal B(\blank\, a\, a\, \blank\, a\, b\, b)=\mathcal B(\blank\, a\,\blank\, a\, b)=(a,a,b)$.
+\end{definition}
+
+\begin{definition}{CTC probability and loss}{ctc}
+A network outputs, at every frame $t$, a distribution $p_t(\cdot)$ over $\mathcal C\cup\{\blank\}$, with frames conditionally
+independent given the input. Then
+\[
+p(\vy\mid\vx)=\sum_{\bm\pi\in\mathcal B^{-1}(\vy)}\ \prod_{t=1}^{T}p_t(\pi_t),\qquad
+\ell_{\text{CTC}}(\vx,\vy)=-\log p(\vy\mid\vx).
+\]
+\end{definition}
+
+The blank does two jobs: it lets frames say ``nothing new here'', and it separates genuine repeats ($a\,\blank\,a\mapsto aa$, but
+$a\,a\mapsto a$).
+
+\begin{theorem}{Forward algorithm}{fwd}
+Let $\vy'=(\blank,y_1,\blank,y_2,\dots,y_U,\blank)$ (length $2U+1$). Define $\alpha_t(s)$ as the total probability of all prefixes
+$\pi_{1..t}$ that collapse to the part of $\vy'$ ending at position $s$. Then $\alpha_1(1)=p_1(\blank)$, $\alpha_1(2)=p_1(y_1)$,
+$\alpha_1(s)=0$ for $s>2$, and
+\[
+\alpha_t(s)=\Big(\alpha_{t-1}(s)+\alpha_{t-1}(s-1)+\1\big[y'_s\ne\blank,\ y'_s\ne y'_{s-2}\big]\,\alpha_{t-1}(s-2)\Big)\,p_t(y'_s),
+\]
+with $p(\vy\mid\vx)=\alpha_T(2U+1)+\alpha_T(2U)$. Cost: $O(TU)$ instead of a sum over exponentially many alignments.
+\end{theorem}
+\begin{proof}[Proof sketch]
+A valid path moves through $\vy'$ left to right; at each frame it may stay on the same symbol, advance by one, or skip a blank
+between two \emph{different} labels (skipping between equal labels would merge them). Summing over the three predecessors and
+multiplying by the current frame's probability gives the recursion; a complete path must end on the last label or the final blank.
+\end{proof}
+
+\section{The one-label special case}
+
+For LID the ``label sequence'' of an utterance is just its language: $\vy=(\ell)$, $U=1$.
+
+\begin{proposition}{Closed form of single-label CTC}{ctc1}
+For $\vy=(\ell)$,
+\[
+\mathcal B^{-1}\big((\ell)\big)=\big\{\,\blank^{a}\,\ell^{b}\,\blank^{c}\ :\ a,c\ge0,\ b\ge1,\ a+b+c=T\,\big\},
+\]
+a set of $T(T+1)/2$ alignments, and
+\[
+p(\ell\mid\vx)=\sum_{1\le s\le e\le T}\ \prod_{t<s}p_t(\blank)\prod_{t=s}^{e}p_t(\ell)\prod_{t>e}p_t(\blank).
+\]
+\end{proposition}
+\begin{proof}
+$\mathcal B(\bm\pi)=(\ell)$ requires that no other language appears (it would survive the collapse) and that, after merging repeats,
+exactly one $\ell$ remains. If $\ell$ appeared in two runs separated by a blank, the collapse would give $(\ell,\ell)$. So the $\ell$'s
+form one contiguous run $\pi_s..\pi_e$ with $1\le s\le e\le T$, blanks elsewhere. The number of pairs $s\le e$ is $\binom T2+T=T(T+1)/2$.
+The probability is the sum of the path products.
+\end{proof}
+
+\begin{intuition}[: what the head learns]
+To make $p(\ell\mid\vx)$ large, the head must output ``$\ell$'' with high probability on \emph{one stretch} of frames and ``blank''
+elsewhere, and must give the \emph{other} languages low probability everywhere (any frame on another language ruins every path
+through it). It is a ``detect the language somewhere'' objective, a soft version of multiple-instance learning. The gradient reaches
+\emph{every} encoder frame directly, rather than only through the decoder's first step.
+\end{intuition}
+
+\section{Attaching the head to Whisper}
+
+\begin{definition}{LID-CTC head}{head}
+A single linear layer $\bm u\mapsto W\bm u+\bm c$, $W\in\R^{8\times1280}$, on each encoder output $\vh_t$, followed by a softmax over
+8 classes: blank (class 0) and the 7 languages in alphabetical order (as, bn, en, hi, mr, or, te). It is trained with
+\[
+\mathcal L_{\text{LID}}=\frac{1}{|\mathcal S|}\sum_{i\in\mathcal S}\frac{\ell_{\text{CTC}}\big(\vx^{(i)},(\ell^{(i)})\big)}{T_i},
+\]
+where $\mathcal S$ is the set of \emph{speech} clips in the batch (non-speech clips are excluded, Chapter~\ref{ch:robust}) and
+$T_i$ is the number of valid encoder frames (Proposition~\ref{prop:encframes}).
+\end{definition}
+
+\paragraph{Why divide by $T_i$?} Bug 9: without it the loss was about 300 at initialisation. A randomly initialised head assigns
+roughly $1/8$ to each class, so every path has probability about $8^{-T}$ and $-\log p(\ell\mid\vx)\approx T\log 8-\log\frac{T(T+1)}2$,
+which grows linearly in $T$ (hundreds for clips of several seconds). That would swamp the token cross-entropy (about 2 at the
+start). Dividing by $T_i$ makes it a per-frame quantity on the same scale. This was fixed before any experiment ran.
+
+\begin{definition}{The joint objective}{joint}
+\[
+\mathcal L(\theta)=\mathcal L_{\text{CE}}(\theta)+\lambda\,\mathcal L_{\text{LID}}(\theta),\qquad\lambda=0.3 .
+\]
+The head has its own learning rate $10^{-3}$. Its gradient flows into the encoder (it is not detached).
+\end{definition}
+
+\section{From frame posteriors to one decision}
+
+At test time the head gives $p_t(c)$ for every valid frame. The utterance decision is
+\[
+\hat\ell_{\text{head}}=\argmax_{\ell\in\mathcal L}\ \sum_{t=1}^{T}p_t(\ell),
+\]
+blank excluded. The normalised vector $q(\ell)=\sum_tp_t(\ell)\big/\sum_{\ell'}\sum_tp_t(\ell')$ is used as the head's
+probability in the calibrated rule of Chapter~\ref{ch:svarah}.
+
+\begin{incode}
+\file{train_whisper.py}: \texttt{F.ctc\_loss(log\_probs, lidx.unsqueeze(1), nfr, ones, blank=0, zero\_infinity=True,
+reduction="none") / nfr}, masked to speech clips. Target length 1, input length \texttt{nfr} $=T_i$. \file{common.py: head_lid}
+implements the summed-posterior decision; \file{lid_head.pt} stores the class order.
+\end{incode}
+
+\section{Experiment E2: how much LID-CTC?}
+
+Whisper-small, LoRA, hi/te/as, 1{,}200 steps, $\lambda\in\{0,0.1,0.3,1.0\}$; dev split.
+
+\begin{center}
+\small
+\begin{tabular}{lcccc}
+\toprule
+ & $\lambda=0$ & $0.1$ & $\mathbf{0.3}$ & $1.0$\\
+\midrule
+CER IndicVoices as & 0.246 & 0.250 & 0.246 & \textbf{0.358}\\
+CER FLEURS as & 0.204 & 0.140 & 0.158 & 0.178\\
+CER IndicVoices hi & 0.132 & 0.131 & 0.122 & 0.129\\
+token-LID IndicVoices as & 0.73 & 0.81 & 0.84 & 0.83\\
+token-LID IndicVoices hi & 0.86 & 0.84 & 0.83 & 0.84\\
+head-LID IndicVoices hi & -- & 0.91 & 0.92 & 0.91\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{itemize}
+\item CER is unchanged within noise, except that $\lambda=1$ clearly hurts Assamese IndicVoices: too much weight on LID competes
+with transcription.
+\item The auxiliary loss \emph{improves the decoder token LID} on the hard Assamese set (0.73 $\to$ 0.81--0.84): a shared-encoder
+effect.
+\item On hard sets the head itself is better than the token (Hindi IndicVoices 0.92 vs 0.83).
+\end{itemize}
+Decision: $\lambda=0.3$ (the evidence is weak; differences between 0.1 and 0.3 are within noise).
+
+\paragraph{At scale (Stage 2, test).} The head beats the token most where LID is hardest: IndicVoices Assamese token 0.66, head
+0.83. Pooled recall of Assamese: token 0.82, head 0.92 (Chapter~\ref{ch:results}).
+
+\begin{exercise}{A 3-frame example}{ctc3}
+$T=3$, true language $\ell$. Frame posteriors: $p_t(\ell)=(0.2,0.7,0.6)$, $p_t(\blank)=(0.7,0.2,0.3)$ (rest on other languages).
+Compute $p(\ell\mid\vx)$ with Proposition~\ref{prop:ctc1}.\par
+\textit{Solution.} Sum over runs $[s,e]$:
+$[1,1]$: $0.2\cdot0.2\cdot0.3=0.012$; $[2,2]$: $0.7\cdot0.7\cdot0.3=0.147$; $[3,3]$: $0.7\cdot0.2\cdot0.6=0.084$;
+$[1,2]$: $0.2\cdot0.7\cdot0.3=0.042$; $[2,3]$: $0.7\cdot0.7\cdot0.6=0.294$; $[1,3]$: $0.2\cdot0.7\cdot0.6=0.084$.
+Total $0.663$; loss $-\log0.663=0.411$, per frame $0.137$. The utterance decision uses $\sum_tp_t(\ell)=1.5$.
+\end{exercise}

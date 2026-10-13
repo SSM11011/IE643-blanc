@@ -1,0 +1,4 @@
+Loading weights:   0%|          | 0/587 [00:00<?, ?it/s]Loading weights:  44%|████▍     | 259/587 [00:00<00:00, 2578.92it/s]Loading weights:  98%|█████████▊| 576/587 [00:00<00:00, 2912.80it/s]Loading weights: 100%|██████████| 587/587 [00:00<00:00, 2908.04it/s]
+/home/shibam/IE643/.venv/lib/python3.12/site-packages/torch/jit/_serialization.py:176: FutureWarning: `torch.jit.load` is deprecated. Please switch to `torch.export`.
+  warnings.warn(
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer WhisperTokenizer. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.

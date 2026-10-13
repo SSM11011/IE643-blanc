@@ -1,0 +1,155 @@
+\chapter{Robustness: Augmentation, Non-Speech Clips and Hallucination}
+\chaptermark{Robustness}
+\label{ch:robust}
+
+\section{Why not a denoiser?}
+
+The obvious idea, cleaning the audio with a speech-enhancement network before recognition, was rejected on evidence: three
+independent 2025--26 studies found that enhancement in front of a strong ASR model raises WER (MetricGAN+ degraded ASR in all 40
+tested configurations; SAM-Audio raised Whisper's WER/CER on noisy Bengali). Enhancement optimises \emph{perceptual} quality and
+introduces artefacts the recogniser has never seen. The alternative is to expose the recogniser itself to degraded audio during
+training.
+
+\section{The four augmentations}
+
+All augmentation is applied on the fly, per sample, with a seeded random generator (Chapter~\ref{ch:training}).
+
+\subsection{Additive noise at a chosen SNR}
+
+\begin{definition}{Signal-to-noise ratio}{snr}
+For signal $\bm s$ and noise $\bm n$ of equal length, with powers $P_s=\frac1N\sum s_i^2$ and $P_n=\frac1N\sum n_i^2$,
+$\mathrm{SNR}=10\log_{10}(P_s/P_n)$ dB.
+\end{definition}
+
+\begin{proposition}{Mixing at a target SNR}{snrmix}
+To mix noise into $\bm s$ at exactly $\sigma$ dB, use $\bm s+g\bm n$ with $g=\sqrt{P_s/(P_n10^{\sigma/10})}$.
+\end{proposition}
+\begin{proof}
+The scaled noise has power $g^2P_n=P_s10^{-\sigma/10}$, so $10\log_{10}\big(P_s/(g^2P_n)\big)=\sigma$.
+\end{proof}
+
+Training noise comes from MUSAN \emph{noise} and \emph{music} (speech was deliberately excluded), at $\sigma\sim\mathcal U(0,20)$ dB.
+At 0 dB noise is as loud as speech.
+
+\subsection{Reverberation}
+
+A room is (approximately) a linear time-invariant system, fully described by its \emph{room impulse response} (RIR) $\bm r$. The
+reverberant signal is the convolution $y[n]=\sum_k r[k]\,s[n-k]$, computed with an FFT, truncated to the original length and
+rescaled to the original energy.
+
+\begin{vivatip}[: bug 11, a contaminated RIR pool]
+92 of the 2{,}417 files in the ``real RIRs'' folder were 30-s, 8-channel \emph{isotropic noise} recordings, not impulse responses, and
+multi-channel RIRs were being averaged across microphones (different delays smear the response). So about 4\% of ``reverb''
+augmentations convolved speech with noise. Fixed: noise files excluded (2{,}325 RIRs remain), first channel only. The reverb columns
+of the early E4 robustness results used the contaminated pool.
+\end{vivatip}
+
+\subsection{Speed perturbation}
+
+Resampling by a rational factor $u/d$ and playing at 16 kHz changes duration by $u/d$ and pitch by $d/u$. Factors:
+$10/9,\ 11/10$ (slower) or $9/10,\ 10/11$ (faster), i.e.\ about $\pm10\%$.
+
+\begin{proposition}{The 27-second guard}{guard}
+The largest stretch is $10/9$. A clip stays within Whisper's 30-s window after stretching iff its duration is at most $30\cdot9/10=27$ s.
+\end{proposition}
+Bug 12: before the guard, 228 of the 349{,}592 mix clips could be stretched past 30 s. The feature extractor then cut the audio but the
+label kept the full text, teaching the model to invent words that were never heard. Now clips $\ge27$ s are never speed-perturbed.
+
+\subsection{SpecAugment}
+
+On the log-mel spectrogram, per sample: two time masks of width $\sim\mathcal U\{0,..,39\}$ frames (up to 0.39 s) and two frequency
+masks of width $\sim\mathcal U\{0,..,9\}$ mel bins, filled with the sample's minimum value. Bug 14: the masks used to be drawn over the
+whole 30-s window, so for short clips most masks fell on padding. They are now placed inside the valid length ($2T$ mel frames).
+
+\begin{example}{How often is a sample clean?}{clean}
+\file{augment.py}: speed with probability 0.3 (if $<27$ s), reverb 0.2, noise 0.5, independently. $\Prob(\text{no waveform
+augmentation})=0.7\cdot0.8\cdot0.5=0.28$. SpecAugment is applied to every sample when \texttt{--aug} is on.
+\end{example}
+
+\section{Hallucination and the non-speech recipe}
+
+\begin{definition}{Hallucination and false silence}{halluc}
+On a clip that contains no speech (noise or music only), the model \emph{hallucinates} if it outputs more than 5 tokens. On a clip
+that contains speech, \emph{false silence} means an empty output. Both are measured on held-out files.
+\end{definition}
+
+Whisper is notorious for producing fluent text on silence or music (``Thank you for watching''). The Canary and Calm-Whisper recipe:
+show the model non-speech audio paired with an \emph{empty} transcript.
+
+\begin{definition}{Non-speech training clips}{nsclip}
+With probability $0.05$ a training sample is replaced by a random 2--12 s excerpt of a training noise or music file, with
+\begin{align*}
+\text{decoder input}&=[\texttt{SOT},\ \tok{$\ell_{\text{rand}}$},\ \tok{transcribe},\ \tok{notimestamps}]\\
+\text{labels}&=[\ -100,\ \tok{transcribe},\ \tok{notimestamps},\ \texttt{EOT}\ ]
+\end{align*}
+where $\ell_{\text{rand}}$ is a uniformly random language. The language label is masked ($-100$) and the clip is excluded from the
+LID-CTC loss.
+\end{definition}
+
+\begin{intuition}[: why mask the language]
+Noise has no language. If the random language were a target, the model would be trained to predict a random answer, which is pure
+label noise for both LID outputs (bug 13). What \emph{is} trained is the crucial decision ``after the prompt, emit EOT immediately''.
+\end{intuition}
+
+\section{A metric that could not go below 100\%}
+
+\begin{vivatip}[: bug 10, the most instructive mistake of the project]
+The first hallucination metric reported 97--100\% for \emph{every} model, including one trained on blank-label noise. The first
+diagnosis was ``one EOT target per noise clip is too weak a signal compared with $\sim$100 target tokens per speech clip'', and a 30$\times$
+loss weight on that EOT was added. \textbf{That diagnosis was wrong.} HuggingFace Whisper's default
+\texttt{begin\_suppress\_tokens}$=[220, 50257]$ sets the logits of a space and of EOT to $-\infty$ \emph{at the first generated
+position}. An empty transcript was therefore impossible, and the metric had a floor near 100\%. With suppression disabled, the
+original unweighted model hallucinated on only 2--4\% of clips. Lesson: when a metric does not move at all, suspect the
+measurement before the model.
+\end{vivatip}
+
+\section{Experiment E4}
+
+Whisper-small, LoRA, hi/te/as, 1{,}200 steps.
+
+\paragraph{Clean dev CER} is about the same with and without augmentation (e.g.\ FLEURS as 0.204 $\to$ 0.170, FLEURS hi 0.094
+$\to$ 0.114, IndicVoices as 0.246 $\to$ 0.278: mixed, within noise).
+
+\paragraph{Noisy test audio} (held-out noise files, Hindi FLEURS, CER):
+\begin{center}
+\begin{tabular}{lccccccc}
+\toprule
+Model & clean & 20 dB & 15 & 10 & 5 & 0 dB & reverb\\
+\midrule
+untrained Whisper-small & 0.357 & 0.478 & 0.548 & 0.588 & 0.703 & 0.806 & 0.547\\
+LoRA, no augmentation & 0.098 & 0.102 & 0.113 & 0.129 & 0.165 & 0.367 & 0.231\\
+LoRA + aug + non-speech & 0.097 & 0.103 & 0.108 & 0.162 & 0.155 & \textbf{0.217} & 0.257\\
+\bottomrule
+\end{tabular}
+\end{center}
+The benefit appears mainly at low SNR (0 dB: 0.367 $\to$ 0.217).
+
+\paragraph{Hallucination} (100 held-out noise/music clips per language, suppression disabled):
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+Model & hi & te & as\\
+\midrule
+untrained Whisper-small & 0.98 & 1.00 & 1.00\\
+LoRA, no non-speech data & 0.98 & 1.00 & 0.98\\
+LoRA + aug + non-speech (unweighted EOT) & \textbf{0.04} & \textbf{0.02} & \textbf{0.03}\\
+LoRA + aug + non-speech (EOT weight 30) & 0.00 & 0.00 & 0.00\\
+\bottomrule
+\end{tabular}
+\end{center}
+Mean output tokens on noise fell from 150--180 to 3--7. False silence on real speech stayed at 0.00 (0.01 for Assamese with weight 30).
+Decision: keep augmentation and non-speech clips, \emph{unweighted} (weight 30 was never needed; it slightly raises false silence).
+
+\paragraph{At scale (Stage 2):} hallucination 0.00--0.01 in all 7 languages, false silence 0.00 (Chapter~\ref{ch:results}).
+
+\begin{incode}
+\file{augment.py}: \texttt{add\_noise}, \texttt{reverb}, \texttt{speed}, \texttt{augment}, \texttt{spec\_augment}. Noise and RIR files
+are split by an MD5 hash of the path: $\text{hash}\bmod5=0$ (20\%) held out for evaluation, the rest for training, so no evaluation
+noise file is ever heard in training. \file{eval_halluc.py} sets \texttt{begin\_suppress\_tokens=None}. The
+\texttt{hallucination\_rate} fields in old \file{snr_*.json} files are invalid and must be ignored.
+\end{incode}
+
+\begin{exercise}{Why use a hash of the path rather than random.shuffle for the 80/20 split?}{hash}
+\textit{Solution.} The hash split is a deterministic function of the file name, so every script, run and machine gets exactly the
+same partition without sharing a seed or a file list, and adding new files never moves old ones between the two sides.
+\end{exercise}

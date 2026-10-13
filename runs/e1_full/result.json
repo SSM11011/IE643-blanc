@@ -1,0 +1,57 @@
+{
+ "args": {
+  "model": "/home/shibam/IE643/models/whisper-small",
+  "name": "e1_full",
+  "mode": "full",
+  "langs": "hi",
+  "cs": false,
+  "manifest": "/home/shibam/IE643/data/processed/splits/train_mix_epoch0.jsonl",
+  "steps": 1000,
+  "bs": 32,
+  "lr": null,
+  "warmup": 0.1,
+  "r": 32,
+  "alpha": 64,
+  "workers": 12,
+  "eval_n": 96,
+  "eval_start": false,
+  "freeze_enc_frac": 0.0,
+  "seed": 0,
+  "no_compile": false,
+  "lid_ctc": 0.0,
+  "lid_detach": false,
+  "aug": false,
+  "nonspeech": 0.0
+ },
+ "lr": 1e-05,
+ "trainable_M": 241.734912,
+ "train_time_s": 1661.8855409622192,
+ "utt_per_s": 19.255237000350206,
+ "final_loss": 0.20482471883296965,
+ "eval_final": {
+  "fleurs/hi": {
+   "cer": 0.10117302052785923,
+   "wer": 0.24308390022675738,
+   "lid_acc": 1.0,
+   "lid_acc_head": null,
+   "loop_rate": 0.0,
+   "n": 96
+  },
+  "indicvoices/hi": {
+   "cer": 0.17253521126760563,
+   "wer": 0.36247723132969034,
+   "lid_acc": 1.0,
+   "lid_acc_head": null,
+   "loop_rate": 0.010416666666666666,
+   "n": 96
+  },
+  "kathbath/hi": {
+   "cer": 0.14288278585532221,
+   "wer": 0.41274238227146814,
+   "lid_acc": 1.0,
+   "lid_acc_head": null,
+   "loop_rate": 0.0,
+   "n": 96
+  }
+ }
+}

@@ -1,0 +1,73 @@
+{
+ "args": {
+  "model": "/home/shibam/IE643/models/whisper-small",
+  "name": "e1_lora",
+  "mode": "lora",
+  "langs": "hi",
+  "cs": false,
+  "manifest": "/home/shibam/IE643/data/processed/splits/train_mix_epoch0.jsonl",
+  "steps": 1000,
+  "bs": 32,
+  "lr": null,
+  "warmup": 0.1,
+  "r": 32,
+  "alpha": 64,
+  "workers": 12,
+  "eval_n": 96,
+  "eval_start": true,
+  "freeze_enc_frac": 0.0,
+  "seed": 0,
+  "no_compile": false
+ },
+ "lr": 0.0005,
+ "trainable_M": 12.976128,
+ "eval_step0": {
+  "fleurs/hi": {
+   "cer": 0.48689516129032256,
+   "wer": 0.8117913832199547,
+   "lid_acc": 1.0,
+   "loop_rate": 0.11458333333333333,
+   "n": 96
+  },
+  "indicvoices/hi": {
+   "cer": 1.3921993499458287,
+   "wer": 1.8099574984820888,
+   "lid_acc": 1.0,
+   "loop_rate": 0.28125,
+   "n": 96
+  },
+  "kathbath/hi": {
+   "cer": 0.719439956919763,
+   "wer": 1.1929824561403508,
+   "lid_acc": 1.0,
+   "loop_rate": 0.08333333333333333,
+   "n": 96
+  }
+ },
+ "train_time_s": 1923.3592886924744,
+ "utt_per_s": 16.637557084868426,
+ "final_loss": 0.1566291357576847,
+ "eval_final": {
+  "fleurs/hi": {
+   "cer": 0.09494134897360704,
+   "wer": 0.21360544217687075,
+   "lid_acc": 1.0,
+   "loop_rate": 0.0,
+   "n": 96
+  },
+  "indicvoices/hi": {
+   "cer": 0.10847778981581799,
+   "wer": 0.27140255009107467,
+   "lid_acc": 1.0,
+   "loop_rate": 0.0,
+   "n": 96
+  },
+  "kathbath/hi": {
+   "cer": 0.12529168910429006,
+   "wer": 0.3739612188365651,
+   "lid_acc": 1.0,
+   "loop_rate": 0.0,
+   "n": 96
+  }
+ }
+}

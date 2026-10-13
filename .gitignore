@@ -1,0 +1,30 @@
+# Large / local-only
+data/
+models/
+repos/
+.venv/
+.venv-qwen/
+.ortgpu/
+.claude/
+.agents/
+skills-lock.json
+archive/
+__pycache__/
+*.pyc
+
+# Training runs: keep only small result/config JSON, not weights or checkpoints
+runs/**
+!runs/*/
+!runs/*/*.json
+!runs/*/adapter/
+!runs/*/adapter/adapter_config.json
+
+# LaTeX build artifacts (compiled PDF is IE643_Project_Complete_Notes.pdf)
+docs/project_notes/*.aux
+docs/project_notes/*.toc
+docs/project_notes/*.log
+docs/project_notes/main.pdf
+
+# Unrelated course notes
+DS601_Complete_Notes.pdf
+IE643_Complete_Exam_Notes.pdf

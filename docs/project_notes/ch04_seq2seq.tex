@@ -1,0 +1,120 @@
+\chapter{Sequence-to-Sequence Learning and the Transformer}
+\chaptermark{Sequence-to-Sequence and Transformers}
+\label{ch:seq2seq}
+
+ASR maps a sequence (audio frames) to another sequence (text tokens) of a different, unknown length. This chapter derives the
+standard tool for that, the encoder--decoder Transformer, at the level needed to understand every later chapter.
+
+\section{Autoregressive factorisation}
+
+Let $\vy=(y_1,\dots,y_U)$ be the target tokens, ending with an end-of-text token \tok{endoftext} (EOT). By the chain rule of
+probability, \emph{any} distribution over sequences can be written as
+\[
+p_\theta(\vy\mid\vx)=\prod_{t=1}^{U}p_\theta(y_t\mid \vy_{<t},\vx).
+\]
+So it suffices to model one next-token distribution at a time. The decoder outputs logits $\vz_t\in\R^V$ and
+$p_\theta(\cdot\mid\vy_{<t},\vx)=\softmax(\vz_t)$, where $\softmax(\vz)_v=e^{z_v}/\sum_{u}e^{z_u}$.
+
+\begin{definition}{Maximum likelihood and token cross-entropy}{nll}
+Given training pairs $(\vx^{(i)},\vy^{(i)})$, we minimise the negative log-likelihood, averaged over target tokens:
+\[
+\mathcal L_{\text{CE}}(\theta)=\frac{1}{\sum_i U_i}\sum_i\sum_{t=1}^{U_i}-\log p_\theta\big(y^{(i)}_t\mid \vy^{(i)}_{<t},\vx^{(i)}\big).
+\]
+\end{definition}
+
+\begin{proposition}{Gradient of softmax cross-entropy}{cegrad}
+For one position with logits $\vz$ and target $y$, $\ell(\vz)=-\log\softmax(\vz)_y$ has gradient $\nabla_{\vz}\ell=\bm p-\bm e_y$,
+where $\bm p=\softmax(\vz)$ and $\bm e_y$ is the one-hot vector of $y$.
+\end{proposition}
+\begin{proof}
+$\ell=-z_y+\log\sum_u e^{z_u}$. Then $\partial\ell/\partial z_v=-\1[v=y]+e^{z_v}/\sum_u e^{z_u}=p_v-\1[v=y]$.
+\end{proof}
+
+\begin{intuition}
+The gradient pushes the correct logit up by $1-p_y$ and every wrong logit down by its own probability. Every token in the vocabulary
+receives a gradient at every position. This matters in Chapter~\ref{ch:odia}: the new Odia token is pushed down at every position
+of every non-Odia utterance, and up only where it is the target.
+\end{intuition}
+
+\section{Teacher forcing}
+
+During training the decoder is fed the \emph{true} previous tokens, not its own predictions (``teacher forcing''). In practice the
+decoder input is the target sequence shifted right by one, with a start token in front:
+\[
+\text{decoder input}=(\texttt{SOT},y_1,\dots,y_{U-1}),\qquad \text{labels}=(y_1,\dots,y_U).
+\]
+All $U$ positions are then computed in one parallel forward pass (with a causal mask, below). Positions that should not be
+trained get the label $-100$, which PyTorch's cross-entropy ignores.
+
+\section{Attention}
+
+\begin{definition}{Scaled dot-product attention}{attn}
+Given queries $Q\in\R^{n\times d_k}$, keys $K\in\R^{m\times d_k}$ and values $V\in\R^{m\times d_v}$,
+\[
+\mathrm{Attn}(Q,K,V)=\softmax\!\Big(\frac{QK^\top}{\sqrt{d_k}}+M\Big)V,
+\]
+with the softmax taken row by row and $M$ a mask ($0$ = allowed, $-\infty$ = forbidden). Row $i$ of the output is a convex
+combination of the value vectors, weighted by how well query $i$ matches each key.
+\end{definition}
+
+\begin{proposition}{Why divide by $\sqrt{d_k}$}{scale}
+If the entries of $\bm q,\bm k\in\R^{d_k}$ are independent with mean 0 and variance 1, then $\E[\bm q^\top\bm k]=0$ and
+$\mathrm{Var}(\bm q^\top\bm k)=d_k$. Dividing by $\sqrt{d_k}$ restores unit variance.
+\end{proposition}
+\begin{proof}
+$\bm q^\top\bm k=\sum_{j}q_jk_j$. Each term has mean $\E q_j\E k_j=0$ and variance $\E[q_j^2]\E[k_j^2]=1$, and the terms are
+independent, so variances add to $d_k$.
+\end{proof}
+Without the scaling, large dot products saturate the softmax (almost one-hot), whose gradients are then nearly zero.
+
+\paragraph{Multi-head attention.} The model dimension $d$ is split into $H$ heads of size $d/H$. Each head has its own
+projections $W^Q_h,W^K_h,W^V_h\in\R^{d\times d/H}$; the head outputs are concatenated and multiplied by $W^O\in\R^{d\times d}$. In
+HuggingFace's Whisper these four matrices are the modules \texttt{q\_proj}, \texttt{k\_proj}, \texttt{v\_proj}, \texttt{out\_proj}:
+exactly the names LoRA targets in Chapter~\ref{ch:lora}.
+
+\paragraph{Three kinds of attention in an encoder--decoder.}
+\begin{enumerate}
+\item \textbf{Encoder self-attention}: queries, keys and values all come from the encoder; no mask (every frame sees every frame).
+\item \textbf{Decoder causal self-attention}: from the decoder; $M_{ij}=-\infty$ for $j>i$, so position $i$ cannot look at
+future tokens. This is what makes parallel teacher-forced training equivalent to left-to-right generation.
+\item \textbf{Cross-attention}: queries from the decoder, keys and values from the encoder output. This is how the text ``reads''
+the audio.
+\end{enumerate}
+
+\section{The Transformer block}
+
+Whisper uses \emph{pre-norm} residual blocks. For an encoder layer with input $H\in\R^{n\times d}$:
+\[
+H\leftarrow H+\mathrm{MHA}(\LN(H)),\qquad H\leftarrow H+\mathrm{MLP}(\LN(H)),\qquad
+\mathrm{MLP}(\bm u)=W_2\,\mathrm{GELU}(W_1\bm u+\bm b_1)+\bm b_2,
+\]
+with $W_1\in\R^{4d\times d}$ (\texttt{fc1}) and $W_2\in\R^{d\times 4d}$ (\texttt{fc2}). A decoder layer has three sub-blocks:
+causal self-attention, cross-attention, MLP. Positional information is added at the input (sinusoidal for the encoder, learned for
+the decoder), because attention itself is permutation-invariant.
+
+\begin{intuition}[: residual streams]
+Each block \emph{adds} a correction to a running ``residual stream''. If a block's output is zero, the layer is the identity. This is
+exactly why LoRA can be initialised so that the fine-tuned model starts identical to the pretrained one: an added correction of zero
+changes nothing (Chapter~\ref{ch:lora}).
+\end{intuition}
+
+\section{Decoding}
+
+At inference time there is no reference, so tokens are generated one by one. This project uses \textbf{greedy decoding}:
+$\hat y_t=\argmax_v p_\theta(v\mid\hat{\vy}_{<t},\vx)$ until EOT or a maximum of 440 new tokens.
+
+\paragraph{KV cache.} At step $t$ the keys and values of positions $1..t-1$ do not change, so they are cached; each step computes
+only the new position. Generating $U$ tokens costs $O(U)$ decoder passes of one position each instead of $O(U^2)$ total positions.
+The encoder runs once per clip.
+
+\begin{exercise}{Why is training parallel but inference sequential?}{par}
+\textit{Solution.} In training all inputs $(\texttt{SOT},y_1,\dots,y_{U-1})$ are known in advance (teacher forcing), and the causal
+mask guarantees position $t$ uses only positions $<t$, so all positions are computed at once. In inference $\hat y_t$ is needed to
+compute position $t+1$, so steps must run one after another.
+\end{exercise}
+
+\begin{vivatip}
+A classic question: ``what is exposure bias?'' With teacher forcing the decoder never sees its own mistakes during training; at test
+time one wrong token can push it into states it never saw. Repetition loops are one visible symptom. The hard 440-token cap and the
+``loop rate'' metric (fraction of outputs that hit the cap) are the project's guards.
+\end{vivatip}

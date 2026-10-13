@@ -1,0 +1,150 @@
+\chapter{Measuring Success: Edit Distance, WER, CER and LID Accuracy}
+\chaptermark{Metrics}
+\label{ch:metrics}
+
+Before building anything we must agree on how to score it. A wrong metric would make every later comparison meaningless, and two
+metric bugs in this project (Chapter~\ref{ch:lessons}) would have changed conclusions.
+
+\section{Edit distance}
+
+\begin{definition}{Levenshtein distance}{lev}
+Let $\bm r=(r_1,\dots,r_n)$ and $\bm h=(h_1,\dots,h_m)$ be sequences over an alphabet. An \emph{edit} is one substitution
+($r_i\to h_j$), deletion (drop $r_i$) or insertion (add $h_j$). The Levenshtein distance $d(\bm r,\bm h)$ is the minimum number of
+edits that turns $\bm r$ into $\bm h$.
+\end{definition}
+
+\begin{theorem}{Dynamic programme for edit distance}{levdp}
+Let $D[i,j]=d\big((r_1..r_i),(h_1..h_j)\big)$. Then $D[i,0]=i$, $D[0,j]=j$ and for $i,j\ge1$
+\[
+D[i,j]=\min\Big\{\,D[i-1,j]+1,\ \ D[i,j-1]+1,\ \ D[i-1,j-1]+\1[r_i\ne h_j]\,\Big\}.
+\]
+$d(\bm r,\bm h)=D[n,m]$, computed in $O(nm)$ time.
+\end{theorem}
+\begin{proof}
+An optimal edit script, read left to right, aligns the prefixes. Look at its last operation. Either $r_i$ was deleted (cost 1 plus
+the best way to turn $r_{1..i-1}$ into $h_{1..j}$), or $h_j$ was inserted (cost 1 plus $D[i,j-1]$), or $r_i$ was aligned with $h_j$
+(cost 0 if equal, 1 if substituted, plus $D[i-1,j-1]$). Every script ends in one of these three ways, and each sub-problem is
+solved optimally by induction on $i+j$, so the minimum of the three is optimal. The base cases need $i$ deletions or $j$ insertions.
+\end{proof}
+
+\begin{example}{``kitten'' $\to$ ``sitting''}{kitten}
+\[
+\begin{array}{c|cccccccc}
+ & \epsilon & s & i & t & t & i & n & g\\\hline
+\epsilon & 0&1&2&3&4&5&6&7\\
+k & 1&\bm1&2&3&4&5&6&7\\
+i & 2&2&\bm1&2&3&4&5&6\\
+t & 3&3&2&\bm1&2&3&4&5\\
+t & 4&4&3&2&\bm1&2&3&4\\
+e & 5&5&4&3&2&\bm2&3&4\\
+n & 6&6&5&4&3&3&\bm2&\bm3
+\end{array}
+\]
+$d=3$: substitute $k\to s$, substitute $e\to i$, insert $g$. So $S=2$, $D=0$, $I=1$.
+\end{example}
+
+\section{WER and CER}
+
+\begin{definition}{Word and character error rates}{wercer}
+For a test set of utterances $i=1,\dots,K$ with references $\bm r^{(i)}$ and hypotheses $\bm h^{(i)}$, both \emph{normalised}
+(Section~\ref{sec:norm}),
+\[
+\CER=\frac{\sum_{i} d_{\text{char}}\big(\bm r^{(i)},\bm h^{(i)}\big)}{\sum_i |\bm r^{(i)}|_{\text{char}}}
+=\frac{S+D+I}{N},
+\]
+where sequences are compared character by character (spaces included). WER is the same with words (split on spaces) as symbols.
+\end{definition}
+
+Note the \emph{micro-average}: total errors over total reference length, not the mean of per-utterance rates. Long utterances weigh
+more. This is what \texttt{jiwer.cer(list, list)} computes and what \file{metrics.py} reports.
+
+\begin{proposition}{CER is not bounded by 1}{cerbound}
+For one pair, $|m-n|\le d(\bm r,\bm h)\le\max(m,n)$. Hence $\CER\le\max(m,n)/n$, which is unbounded as $m\to\infty$.
+\end{proposition}
+\begin{proof}
+Each edit changes the length by at most one, and the length must change by $|m-n|$, so $d\ge|m-n|$. Upper bound: substitute
+$\min(m,n)$ aligned positions and insert or delete the remaining $|m-n|$ symbols, $\min(m,n)+|m-n|=\max(m,n)$ edits.
+\end{proof}
+
+\begin{intuition}[: what CER $>1$ means]
+A CER above 1 means the hypothesis is much \emph{longer} than the reference. In this project it almost always means a
+\emph{repetition loop}: the decoder keeps emitting the same phrase until it hits the 440-token limit. Vanilla Whisper's CER of
+2.60 on IndicVoices Assamese is a loop symptom, not a ``very precise'' measure of quality.
+\end{intuition}
+
+\paragraph{Why CER is the primary metric here.}
+\begin{itemize}
+\item Indic words are long and inflected (Telugu is agglutinative): one wrong suffix makes the whole word wrong for WER, while CER
+gives partial credit.
+\item Spelling variation (e.g.\ with or without a nukta, two ways of writing a nasal) is common; CER penalises it by one character,
+WER by a whole word.
+\item Code-switched references write English words sometimes in Latin, sometimes in Indic script (Section~\ref{sec:csmetric}).
+\end{itemize}
+WER is still reported for completeness.
+
+\section{Text normalisation}
+\label{sec:norm}
+
+Two strings that a human would call ``the same transcript'' can differ in Unicode bytes, punctuation and case. Scoring raw strings
+would count these as errors. A \emph{single} normaliser is therefore applied to both the training targets and, at scoring time, to
+both references and hypotheses.
+
+\begin{definition}{The project's normaliser \file{normalize(text, lang)}}{normalizer}
+\begin{enumerate}
+\item Unicode NFC (canonical composition).
+\item Delete bracketed spans: \texttt{<...>}, \texttt{[...]}, \texttt{(...)} (tags such as \texttt{<unintelligible>}).
+\item Remove zero-width characters (ZWJ, ZWNJ, ZWSP, BOM).
+\item For Indic languages: the IndicNLP normaliser of that language (canonical forms of nukta letters, chandrabindu, etc.).
+\item For English: NFKC; keep in-word apostrophes, mapping the curly apostrophe U+2019 to \texttt{'}.
+\item Lower-case.
+\item Replace every Unicode \emph{symbol} (category S*) or \emph{punctuation} (category P*) character by a space. This includes the
+danda \deva{।} (U+0964). Combining marks (category M*: matras, viramas) are \emph{kept}.
+\item Collapse runs of whitespace; strip.
+\end{enumerate}
+Digits are \emph{not} converted to words.
+\end{definition}
+
+\begin{example}{Why NFC matters}{nfc}
+The Devanagari letter \deva{क़} (qa) can be stored as one code point U+0958 or as two, \deva{क} U+0915 followed by the nukta U+093C.
+They look identical, but a character-level comparison would count one substitution plus one insertion. NFC (plus IndicNLP's nukta
+handling) maps both to the same sequence.
+\end{example}
+
+\begin{vivatip}[: two known side effects of the normaliser]
+(1) Digits are not verbalised, so ``25'' vs ``twenty five'' counts as errors; this hurts Svarah (Chapter~\ref{ch:svarah}).
+(2) Parenthesised text is deleted. For IndicVoices this removes tags, but in FLEURS the parenthesised words are usually \emph{read
+aloud}, so 5--8\% of FLEURS rows lose spoken words from both targets and references. Re-scoring shows this inflates FLEURS CER by
+0.005--0.02 for \emph{every} system (e.g.\ Stage 2 English 0.042 $\to$ 0.028 if kept). Rankings barely change. This was found in
+the fourth code review and left open because fixing it changes the training targets.
+\end{vivatip}
+
+\section{LID metrics}
+
+\begin{definition}{LID accuracy and confusion matrix}{lidacc}
+For a test set whose true language is $\ell$, LID accuracy is the fraction of utterances with $\hat\ell=\ell$. Pooling all test sets,
+the confusion matrix $C\in\mathbb N^{7\times7}$ has $C_{\ell\ell'}=\#\{\text{utterances of language }\ell\text{ predicted as }\ell'\}$.
+Recall of $\ell$ is $C_{\ell\ell}/\sum_{\ell'}C_{\ell\ell'}$. \emph{Macro} accuracy averages per-set accuracies with equal weight.
+\end{definition}
+
+\section{Oracle versus predicted language}
+\label{sec:oracle}
+
+Whisper must be given a language token before it transcribes. We decode every test utterance twice:
+\begin{itemize}
+\item \textbf{Oracle LID}: the true language token is forced. This measures pure recognition quality.
+\item \textbf{Predicted LID}: the model's own LID decision is used. This is what a user experiences.
+\end{itemize}
+The difference $\CER_{\text{pred}}-\CER_{\text{oracle}}$ is the \emph{routing cost} of LID errors. The literature reports about
+4 CER points for a strong LID-then-ASR system (TalTech, ML-SUPERB 2.0); we measure ours in Chapter~\ref{ch:results}.
+
+\begin{incode}
+\file{eval_whisper.py} decodes with the oracle token, predicts the language, and \emph{re-decodes only the utterances whose
+predicted language differs} (the same token gives the same greedy decode, so the oracle output is reused). It reports
+\texttt{oracle\_norm}, \texttt{oracle\_raw}, \texttt{pred\_norm}, \texttt{lid\_acc}, \texttt{lid\_conf}, and the LID-head accuracy.
+\end{incode}
+
+\begin{exercise}{Micro vs macro}{micro}
+Set A has 2 utterances: reference lengths 10 and 90 characters, with 5 and 9 errors. Compute the micro CER and the mean of per-utterance CERs.\par
+\textit{Solution.} Micro: $(5+9)/(10+90)=0.14$. Mean of rates: $(0.5+0.1)/2=0.30$. The short utterance dominates the macro value.
+The project uses micro CER within a test set, and reports the plain mean over test sets as the summary (``mean over 23 sets'').
+\end{exercise}

@@ -1,0 +1,73 @@
+\chapter{Reproduction and Code Map}
+\chaptermark{Reproduction}
+\label{app:repro}
+
+\section{Code map}
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{lY}
+\toprule
+File (\file{src/}) & Role\\
+\midrule
+\file{common.py} & paths, language list, \texttt{MAX\_TEXT\_TOKENS}, special ids, \texttt{enc\_frames}, noise clips, LID-head helpers\\
+\file{normalize.py}, \file{metrics.py} & the single normaliser; WER/CER via jiwer\\
+\file{audit_data.py} & metadata audit $\to$ \file{reports/data_audit.csv}\\
+\file{build_manifests.py} & decode to 16 kHz FLAC, filters, JSONL manifests\\
+\file{make_splits.py} & speaker-disjoint roles, leakage removal $\to$ \file{splits/}\\
+\file{prep_tokens.py} & Whisper token counts (\texttt{ntok})\\
+\file{balanced_mix.py} & two-stage balanced 700 h mix\\
+\file{augment.py} & noise, RIR, speed, SpecAugment; 80/20 hash split of noise files\\
+\file{train_whisper.py} & full/LoRA/QLoRA, Odia token, LID-CTC, non-speech, checkpoint/resume\\
+\file{load_ft.py} & load vanilla/adapter/full model; correct Odia id\\
+\file{eval_whisper.py} & oracle/predicted CER, LID, head LID, \texttt{--en\_ascii}, \texttt{--lid\_rule}, \texttt{--hyps}\\
+\file{eval_snr.py}, \file{eval_halluc.py} & SNR/reverb sweep; hallucination and false silence\\
+\file{eval_indicconformer.py}, \file{ic_gpu.py} & IndicConformer baseline (onnx2torch, greedy CTC)\\
+\file{eval_qwen3asr.py}, \file{eval_ecapa.py} & Qwen3-ASR and ECAPA baselines (run in \file{.venv-qwen})\\
+\file{make_svarah_calib.py}, \file{lid_calib.py} & speaker-disjoint calibration set; fit $(b,w)$\\
+\file{analysis.py}, \file{cs_metric.py} & bootstrap, paired tests, rCER/sWER, confusion matrices\\
+\file{demo.py} & Gradio demo with Silero-VAD chunking\\
+\file{summarize.py}, \file{baseline_table.py} & regenerate \file{reports/experiments.md}, \file{reports/baselines/summary.md}\\
+\file{run_overnight.sh}, \file{run_stage2.sh} & the exact command chains for E1--E4 and Stage 2\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Commands}
+
+From \file{/home/shibam/IE643}, \texttt{source .venv/bin/activate}, \texttt{cd src}:
+
+\begin{lstlisting}[language=bash]
+python audit_data.py
+python build_manifests.py                   # ~40 min
+python make_splits.py && python prep_tokens.py && python balanced_mix.py 0
+bash run_stage2.sh                          # Stage 2 (~16.6 h); re-running resumes
+python make_svarah_calib.py && python lid_calib.py
+python eval_whisper.py --model ../models/whisper-large-v3-turbo \
+    --adapter ../runs/s2_turbo/adapter --split test --n 100 \
+    --en_ascii --lid_rule ../runs/s2_turbo/lid_rule.json \
+    --out ../reports/test_s2_turbo_fix.json --hyps ../reports/hyps/s2_turbo_fix.jsonl
+python analysis.py                          # reports/analysis.md
+python summarize.py                         # reports/experiments.md
+python demo.py --port 7860
+\end{lstlisting}
+
+\section{Artefacts of the final model}
+
+{\raggedright
+\begin{itemize}
+\item \file{runs/s2_turbo/adapter/}: LoRA weights plus the resized embedding containing the \tok{or} row.
+\item \file{runs/s2_turbo/lid_head.pt}: the $8\times1280$ LID-CTC head and its class order.
+\item \file{runs/s2_turbo/lid_rule.json}: $b=22.25$, $w=2.0$ and the calibration results.
+\item \file{reports/hyps/*.jsonl}: one row per test utterance per system (reference, oracle and predicted hypotheses, LID).
+\end{itemize}}
+
+\section{Things to know before re-using results}
+
+{\raggedright
+\begin{itemize}
+\item E1--E4 are dev-set, single-seed, Whisper-small. Only Stage 2 (and the baselines) were evaluated on the test split.
+\item Use \texttt{LANGID} from \file{load_ft.load}; never look up the Odia id with the tokenizer's \texttt{convert\_tokens\_to\_ids}.
+\item Measure hallucination only with \file{eval_halluc.py}; ignore \texttt{hallucination\_rate} in old \file{snr_*.json}.
+\item Never run two Whisper trainings at once on this machine.
+\end{itemize}}

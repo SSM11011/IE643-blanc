@@ -1,0 +1,113 @@
+\chapter{Evaluation Protocol, Baselines and Statistics}
+\chaptermark{Evaluation and Statistics}
+\label{ch:eval}
+
+\section{The test protocol}
+
+\begin{itemize}
+\item \textbf{23 test sets}: every (corpus, language) pair in the test split: FLEURS $\times7$, IndicVoices $\times6$, Kathbath
+$\times5$, Lahaja hi, LibriSpeech en, Svarah en, MUCS hi and bn.
+\item \textbf{100 utterances per set}, sampled with \texttt{random.Random(0)} from the test split. The \emph{same} 2{,}300 utterances
+are used for every system, which makes paired comparisons possible.
+\item Greedy decoding, at most 440 new tokens, the shared normaliser, micro CER per set.
+\item Summary: the plain mean of the per-set CERs, plus the worst set and the standard deviation (the ML-SUPERB 2.0 style).
+\end{itemize}
+
+\section{Baselines}
+
+\paragraph{Vanilla Whisper large-v3-turbo.} The starting point. Odia is decoded without a language token (it has none).
+
+\paragraph{IndicConformer-600M (AI4Bharat).} A Conformer encoder (convolution + self-attention) with a CTC head over per-language
+character vocabularies, trained on large AI4Bharat corpora (the same sources as IndicVoices and Kathbath). It has no English and no
+LID: the language is always given. It is decoded greedily, which for CTC is simple:
+
+\begin{definition}{Greedy CTC decoding}{greedyctc}
+Take $\hat\pi_t=\argmax_c p_t(c)$ at every frame, then output $\mathcal B(\hat\pi)$ (merge repeats, drop blanks).
+\end{definition}
+
+This is exactly what \file{ic_gpu.py} does (\texttt{unique\_consecutive}, drop id 256 = blank). The ONNX runtime had no GPU kernels
+for this GPU (bug 6), so the encoder and CTC head were converted to PyTorch with \texttt{onnx2torch} (verified: 23 of 24 test
+transcripts identical to the CPU ONNX path, the last differs by one trailing character from batch padding).
+
+\paragraph{Qwen3-ASR 0.6B and 1.7B.} LLM-based ASR with built-in LID for 52 languages, but of ours it supports only Hindi and
+English. On other languages it answers ``Hindi'' or an unrelated language and its CER is 0.34--1.0, so it is compared only on the
+Hindi and English sets, with the language forced.
+
+\paragraph{SpeechBrain ECAPA-TDNN (VoxLingua107).} A dedicated 107-language LID model, used closed-set over the 6 of our languages it
+knows (it has no Odia class). This is the external LID baseline.
+
+\section{Statistics: how sure are we?}
+
+A CER computed on 100 utterances is a random quantity: another 100 utterances would give a different number. We need error bars.
+
+\begin{definition}{Percentile bootstrap confidence interval for CER}{boot}
+For a test set with per-utterance edit counts $e_i$ and reference lengths $n_i$, $i=1..K$, $\widehat{\CER}=\sum_ie_i/\sum_in_i$.
+For $b=1..B$ ($B=2000$), draw $K$ indices $i^{(b)}_1..i^{(b)}_K$ uniformly \emph{with replacement} and compute
+$\CER^{*(b)}=\sum_je_{i^{(b)}_j}\big/\sum_jn_{i^{(b)}_j}$. The 95\% interval is $[q_{0.025},q_{0.975}]$ of
+$\{\CER^{*(b)}\}$.
+\end{definition}
+
+\begin{intuition}[: why resample utterances, not characters]
+Errors inside one utterance are strongly correlated (a misrecognised word costs several characters; a loop costs hundreds). The
+independent unit is the utterance, so that is what we resample. Resampling the pair $(e_i,n_i)$ together keeps the ratio structure
+of CER.
+\end{intuition}
+
+\begin{definition}{Paired bootstrap test}{paired}
+For two systems A and B scored on the same utterances, use the \emph{same} resampled indices for both and record
+$\Delta^{*(b)}=\CER_A^{*(b)}-\CER_B^{*(b)}$. The difference is called significant at 5\% if the 95\% percentile interval of
+$\Delta^*$ excludes 0.
+\end{definition}
+
+\begin{proposition}{Pairing reduces variance}{pairvar}
+$\mathrm{Var}(\hat C_A-\hat C_B)=\mathrm{Var}(\hat C_A)+\mathrm{Var}(\hat C_B)-2\,\mathrm{Cov}(\hat C_A,\hat C_B)$. When both systems
+find the same utterances hard (positive covariance), the paired variance is smaller than for independent samples.
+\end{proposition}
+\begin{proof}
+Bilinearity of covariance.
+\end{proof}
+
+Hard utterances (noisy, fast, rare words) are hard for every system, so the covariance is large and the paired test detects
+differences that two separate CIs would not.
+
+\begin{example}{Reading the numbers}{readci}
+With 100 utterances a single cell has roughly $\pm0.01$--$0.03$ CER uncertainty. IndicConformer minus Stage 2 on FLEURS Telugu:
+$+0.001$, paired 95\% interval $[-0.015,+0.016]$, which contains 0: ``not significantly different''. On IndicVoices Assamese:
+$-0.110$, interval $[-0.136,-0.088]$: IndicConformer is significantly better. FLEURS Hindi is a borderline case: $-0.012$,
+interval $[-0.024,-0.0002]$, which just excludes 0.
+\end{example}
+
+\begin{vivatip}[: what the bootstrap does \emph{not} cover]
+It quantifies \emph{which test utterances were sampled}. It says nothing about training randomness (seed variance): only one seed was
+trained, because one Stage 2 run costs 16.6 GPU hours. Say this unprompted if results are questioned.
+\end{vivatip}
+
+\section{Code-switched speech needs a different metric}
+\label{sec:csmetric}
+
+MUCS references write English words sometimes in Latin script (``computer'') and sometimes in Devanagari (\deva{कंप्यूटर}); models
+also choose either. Plain CER counts ``computer'' vs \deva{कंप्यूटर} as entirely wrong, although both are correct transcriptions.
+
+\begin{definition}{Transliteration-tolerant scores \file{cs_metric.py}}{rcer}
+\textbf{rom}: normalise, then romanise \emph{every} Indic script with ISO 15919 (a hypothesis may be in another script), map anusvara
+to $n$ ($m$ before $p/b$), strip diacritics, lower-case, drop a word-final inherent $a$.
+\textbf{skel}: per word, keep the first letter and drop later vowels and $h,y,w$; fold $c/q/x/z/ph$; collapse repeated letters.
+\[
+\text{rCER}=\CER(\text{rom}(\bm r),\text{rom}(\bm h)),\qquad \text{sWER}=\WER(\text{skel}(\bm r),\text{skel}(\bm h)).
+\]
+\end{definition}
+
+\begin{example}{Two spellings of the same words}{rom}
+\deva{कंप्यूटर साइंस} $\xrightarrow{\text{rom}}$ ``kampyutar sains'', while ``computer science'' stays ``computer science''.
+Under rom the two still differ in several letters (partial credit in rCER), but their skeletons are \emph{identical}: both
+become ``kmptr sns'', so sWER counts no error. (Output of \texttt{python cs\_metric.py}.)
+\end{example}
+
+These scores are loose (partial credit for phonetically close spellings) and are applied identically to every system, so they are
+suitable for \emph{ranking} systems on code-switched speech, not as absolute accuracies.
+
+\begin{incode}
+\file{analysis.py} reads the per-utterance hypotheses (\file{reports/hyps/*.jsonl}, written by every evaluation script with
+\texttt{--hyps}) and produces \file{reports/analysis.md}: bootstrap CIs, paired tests vs Stage 2, rCER/sWER on MUCS, the ML-SUPERB
+summary and the $7\times7$ LID confusion matrices. It regenerates byte-identically from the stored hypotheses.
+\end{incode}

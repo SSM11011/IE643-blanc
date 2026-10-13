@@ -1,0 +1,137 @@
+\chapter{Teaching Whisper a New Language Token: Odia}
+\chaptermark{The Odia Token}
+\label{ch:odia}
+
+\section{The problem}
+
+Odia has about 40 million speakers but no Whisper language token. Without a token we can neither force Odia when transcribing nor
+predict it as a language. We therefore \emph{extend the vocabulary}.
+
+\section{Weight tying}
+
+\begin{definition}{Tied input and output embeddings}{tying}
+Whisper uses one matrix $\bm E\in\R^{V\times d}$ twice. As \emph{input} embedding, token $v$ enters the decoder as the row
+$\bm E_v$. As \emph{output} projection, the logits at a position with final hidden state $\vh_t$ are $\vz_t=\bm E\vh_t$, i.e.\
+$z_{t,v}=\bm E_v^\top\vh_t$.
+\end{definition}
+
+So adding a token means adding one row $\bm E_{V_0}$ (here $V_0=51{,}866$, the old vocabulary size), which acts both as the input
+vector of \tok{or} and as its output ``detector''. Its gradient is the sum of both uses:
+\[
+\nabla_{\bm E_{V_0}}\mathcal L=\underbrace{\sum_{t:\ \text{input}=\tok{or}}\frac{\partial\mathcal L}{\partial\bm e_t}}_{\text{as input}}
++\underbrace{\sum_t\big(p_{t,V_0}-\1[y_t=\tok{or}]\big)\vh_t}_{\text{as output (Prop.~\ref{prop:cegrad})}} .
+\]
+The second sum runs over \emph{every} position of \emph{every} utterance: wherever \tok{or} is not the target, the row is pushed away
+from $\vh_t$ in proportion to the probability it wrongly receives.
+
+\section{Initialisation from Bengali}
+
+\begin{definition}{The Odia row}{orrow}
+After \texttt{resize\_token\_embeddings}$(V_0+1)$, set $\bm E_{V_0}\leftarrow\bm E_{\mathrm{id}(\tok{bn})}$.
+\end{definition}
+
+\begin{proposition}{The clone starts as a perfect tie}{tie}
+Immediately after initialisation, for every input and every position, $z_{t,\tok{or}}=z_{t,\tok{bn}}$. Hence the closed-set LID
+probabilities of Odia and Bengali are equal, and an Odia-prompted decode is identical to a Bengali-prompted decode.
+\end{proposition}
+\begin{proof}
+Both logits equal $\bm E_v^\top\vh_t$ with identical rows. As inputs the two tokens produce identical embeddings, so all hidden
+states are identical too.
+\end{proof}
+
+\begin{intuition}[: why Bengali]
+Odia, Bengali and Assamese are Eastern Indo-Aryan languages with similar sound systems, and the Odia script is historically related
+to the Bengali--Assamese script. Starting as ``Bengali'' means Odia audio immediately gets a high language score, and the decoder
+starts from a conditioning it already knows (an Eastern Indo-Aryan language, not English). Training then only has to \emph{separate}
+Odia from Bengali, which the tie in Proposition~\ref{prop:tie} forces it to do: only the Odia row can move.
+\end{intuition}
+
+\section{Training only one row: the gradient mask}
+
+LoRA does not touch the embedding, so by default it is frozen. We set \texttt{requires\_grad=True} on $\bm E$ and register a hook that
+multiplies its gradient by a mask $M$ whose only non-zero row is row $V_0$:
+\[
+\nabla_{\bm E}\mathcal L\ \leftarrow\ M\odot\nabla_{\bm E}\mathcal L,\qquad M_{v,:}=\1[v=V_0].
+\]
+
+\begin{proposition}{AdamW leaves zero-gradient rows unchanged if and only if weight decay is off}{adamrow}
+Consider AdamW with moments initialised to $0$. If a parameter receives gradient $0$ at every step, then its Adam update is $0$ at
+every step. Its total change is $-\eta\lambda\theta$ per step from decoupled weight decay, which is $0$ if and only if
+$\lambda=0$ (or $\theta=0$).
+\end{proposition}
+\begin{proof}
+Adam: $m_s=\beta_1m_{s-1}+(1-\beta_1)g_s$, $v_s=\beta_2v_{s-1}+(1-\beta_2)g_s^2$. With $g_s=0$ and $m_0=v_0=0$, induction gives
+$m_s=v_s=0$, so the step $\eta\,\hat m_s/(\sqrt{\hat v_s}+\epsilon)=0/\epsilon=0$. AdamW then applies $\theta\leftarrow\theta-\eta\lambda\theta$
+separately, regardless of the gradient.
+\end{proof}
+
+Therefore the embedding is put in its own optimiser group with \textbf{weight decay 0}. With decay, all 51{,}866 frozen rows
+(including every text token of every language) would slowly shrink toward zero.
+
+\begin{incode}
+\file{train_whisper.py}:
+\begin{lstlisting}
+LANGID["or"] = V0
+model.resize_token_embeddings(V0 + 1)
+E[V0] = E[LANGID["bn"]].clone()
+row_mask = torch.zeros_like(emb); row_mask[V0] = 1
+emb.register_hook(lambda g: g * row_mask.to(g.dtype))
+groups.append({"params": [emb], "weight_decay": 0.0, "lr": a.emb_lr})
+\end{lstlisting}
+PEFT saves the resized \texttt{embed\_tokens}/\texttt{proj\_out} with the adapter (verified by reloading: the Odia row is
+restored). \file{load_ft.py} detects ``adapter vocabulary $=$ base $+1$'' and resizes the base model \emph{before} loading.
+\end{incode}
+
+\section{Choosing the learning rate of the row}
+
+The Odia row is a single vector trained from scratch-ish, so its learning rate was chosen by a small sweep (400 steps,
+Whisper-small, \file{runs/embchk_*}):
+
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+\texttt{emb\_lr} & $5\times10^{-5}$ & $\mathbf{2.5\times10^{-4}}$ & $1.5\times10^{-3}$\\
+\midrule
+Odia token-LID & 0.74 & 0.88 & 0.90\\
+Other languages & unchanged & unchanged & unchanged\\
+\bottomrule
+\end{tabular}
+\end{center}
+$2.5\times10^{-4}$ gives almost the LID of the largest value with less drift. (An early all-Odia LID seen at step 40 of a turbo smoke
+test was first blamed on the large learning rate; the sweep showed it was a transient. The log records this wrong suspicion.)
+
+\section{A silent trap: \texttt{convert\_tokens\_to\_ids}}
+
+\begin{vivatip}[: bug 15]
+\texttt{tok.convert\_tokens\_to\_ids("<|or|>")} does not raise an error. The tokenizer does not know the string, so it returns the
+\emph{unknown} id, which for Whisper is 50257 \tok{endoftext}. An evaluation script that prompted Odia this way would have
+prompted with EOT and silently produced empty or garbage output. All code now takes the id from \texttt{LANGID} returned by
+\file{load_ft.load}.
+\end{vivatip}
+
+\section{Result}
+
+Test split, Stage 2 (Chapter~\ref{ch:results}):
+
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+Set & vanilla turbo CER & Stage 2 CER (oracle) & Stage 2 token-LID\\
+\midrule
+FLEURS or & 1.023 & 0.145 & 1.00\\
+Kathbath or & 1.299 & 0.041 & 1.00\\
+IndicVoices or & 2.046 & 0.196 & 0.75\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The new token works. One side effect: the \tok{or} column of the confusion matrix absorbs errors from other languages (17 Hindi,
+22 Assamese, 15 English, 11 Bengali test utterances by token LID). A plausible explanation (not tested) is that \tok{or} is the only
+output row allowed to change, so it is the cheapest way for the optimiser to raise any language score, and it may drift toward a
+generic ``Indic'' direction.
+
+\begin{exercise}{Why not train the whole embedding matrix?}{wholeemb}
+\textit{Solution.} 66 M extra free parameters, all text-token rows of all languages would drift (forgetting), and every row would
+need weight decay decisions. The tied output projection means drifting rows also change every logit. One masked row adds the new
+language with the least possible disturbance.
+\end{exercise}

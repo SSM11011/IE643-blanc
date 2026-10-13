@@ -1,0 +1,108 @@
+\chapter{The Problem: Multilingual Speech Recognition with Language Identification}
+\chaptermark{The Problem}
+
+\section{Two tasks, one model}
+
+\begin{definition}{Automatic speech recognition (ASR)}{asr}
+Let $\mathcal X$ be the set of finite audio signals and $\Sigma^*$ the set of finite strings over a character set $\Sigma$
+(here: Latin letters plus the Devanagari, Bengali--Assamese, Telugu and Odia scripts). ASR is the task of learning a map
+$h:\mathcal X\to\Sigma^*$ such that $h(\vx)$ is the words spoken in $\vx$, written in the conventional script of the language.
+\end{definition}
+
+\begin{definition}{Spoken language identification (LID)}{lid}
+Given a finite set of languages $\mathcal L$, LID is the task of learning $g:\mathcal X\to\mathcal L$, or better a probability
+vector $g(\vx)\in\Delta^{|\mathcal L|-1}$ (the probability simplex), whose largest entry is the language spoken in $\vx$.
+\end{definition}
+
+In this project $\mathcal L$ is \emph{closed}: the model always answers with one of the seven languages, even for French audio. A
+closed-set classifier never says ``none of these''.
+
+\paragraph{Why not two systems?} The classical pipeline is \emph{LID $\to$ route to a language-specific recogniser}. It has two
+weaknesses:
+\begin{enumerate}
+\item \textbf{Error propagation.} If LID is wrong, the wrong recogniser runs and the transcript is garbage. The cost of this is
+measured by the \emph{oracle-vs-predicted gap}: the CER when the true language is given minus the CER when the predicted language
+is used (Section~\ref{sec:oracle}).
+\item \textbf{No sharing.} Seven separate models learn seven times what speech sounds like. Hindi and Marathi share the Devanagari
+script, Bengali and Assamese share a script, and all six Indic languages share many sounds and loan words.
+\end{enumerate}
+A single model with shared representations can transfer knowledge between related languages, and its LID decision is
+taken by the same network that will transcribe, so the two cannot disagree about what was heard.
+
+\section{The seven languages}
+
+\begin{center}
+\small
+\begin{tabular}{lllll}
+\toprule
+Code & Language & Family & Script & ``computer'' as usually written\\
+\midrule
+hi & Hindi & Indo-Aryan & Devanagari & \deva{कंप्यूटर}\\
+mr & Marathi & Indo-Aryan & Devanagari & \deva{संगणक} / \deva{कॉम्प्युटर}\\
+bn & Bengali & Indo-Aryan (Eastern) & Bengali & \beng{কম্পিউটার}\\
+as & Assamese & Indo-Aryan (Eastern) & Bengali--Assamese & \beng{কম্পিউটাৰ}\\
+or & Odia & Indo-Aryan (Eastern) & Odia & \oriy{କମ୍ପ୍ୟୁଟର}\\
+te & Telugu & Dravidian & Telugu & \telu{కంప్యూటర్}\\
+en & English & Germanic & Latin & computer\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Three facts in this table drive many later decisions:
+\begin{itemize}
+\item Assamese and Bengali share a script (they differ in a few letters, e.g.\ Assamese \beng{ৰ} vs Bengali \beng{র}), and Hindi and
+Marathi share Devanagari. LID between these pairs cannot rely on the script of the output; it must come from the audio.
+\item Odia is closely related to Bengali and Assamese (Eastern Indo-Aryan). This is why the new Odia token is initialised from the
+Bengali one (Chapter~\ref{ch:odia}).
+\item Every Indic script is far from ASCII in Unicode. Whisper's tokenizer was built mostly on English text, so Indic text costs
+many more tokens per second of speech (Chapter~\ref{ch:whisper}).
+\end{itemize}
+
+\paragraph{Code-switching.} In \emph{code-switched} speech the speaker mixes languages inside one sentence: ``\deva{मेरा} computer
+\deva{बंद हो गया}''. We include Hindi--English and Bengali--English code-switched speech (the MUCS 2021 corpus) for training and
+testing. A code-switched utterance is labelled with its \emph{matrix} language (hi or bn).
+
+\section{Goals and scope decisions}
+
+The goals came from the course proposal and the literature review (\file{ie643.md}):
+\begin{enumerate}
+\item One Transformer model that transcribes all seven languages and reports the language with a confidence.
+\item Keep LID good after fine-tuning (Whisper's LID is known to collapse when it is fine-tuned on new languages).
+\item Handle the data imbalance between languages.
+\item Be robust to noise and do not invent text on silence or music (``hallucination'').
+\item Compare honestly against the strongest open baselines: IndicConformer-600M (AI4Bharat), Qwen3-ASR (0.6B, 1.7B) and an
+external LID model (SpeechBrain ECAPA, VoxLingua107).
+\end{enumerate}
+
+Scope decisions made during the project (they override the original slides):
+\begin{itemize}
+\item Final language set: hi, en, te, as, or, bn, mr. Tamil and a low-resource tier (Maithili, Konkani, Santali) were dropped.
+\item About 90 hours per language instead of the full corpora (disk and compute budget).
+\item English: LibriSpeech \texttt{train-clean-100} was added so that English had comparable hours.
+\end{itemize}
+
+\section{The four design principles from the literature}
+
+\begin{intuition}[: what the literature review told us to do]
+\begin{enumerate}
+\item \textbf{Keep the language token as a training target.} If the decoder is always \emph{told} the language during fine-tuning,
+it never practises \emph{predicting} it, and LID decays. Making the language token a supervised output keeps it trained.
+\item \textbf{Add an auxiliary encoder LID loss} (LID-CTC). In ML-SUPERB 2.0 (Interspeech 2025) this gave a 14\% relative LID
+improvement.
+\item \textbf{Balance the data deterministically} (two-stage upsampling, as in Polyglot-Lion) rather than letting the biggest corpus
+dominate.
+\item \textbf{No denoiser in front of the recogniser.} Several 2025--26 studies found that speech enhancement in front of a strong
+ASR model \emph{hurts}. Instead: training-time augmentation, and non-speech clips with empty transcripts (Canary, Calm-Whisper).
+\end{enumerate}
+\end{intuition}
+
+\section{The hardware}
+Everything ran on one NVIDIA Thor (aarch64, about 112--122 GB of \emph{unified} memory shared by CPU and GPU, CUDA 13). Unified
+memory has one practical consequence that appears in the log: two Whisper trainings at once exhaust it and both stall, so all
+trainings were run one after another.
+
+\begin{vivatip}
+If asked ``what is new here?'', the honest answer is: no single component is new; the contribution is the combination (Whisper
+turbo + LoRA + a new Odia token + LID-CTC head + balanced sampling + non-speech data) for this specific seven-language set, a careful
+speaker-disjoint evaluation against strong baselines, and the diagnosis and partial repair of the Indian-English regression.
+\end{vivatip}

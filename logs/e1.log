@@ -1,0 +1,177 @@
+Loading weights:   0%|          | 0/479 [00:00<?, ?it/s]Loading weights: 100%|██████████| 479/479 [00:00<00:00, 6117.40it/s]
+mode lora lr 0.0005 trainable 13.0M / 254.7M (5.1%) langs ['hi']
+train utts 50282 hours 90.0 by lang {'hi': 50282}
+[transformers] The attention mask is not set with a batched input, and cannot be inferred from input because pad token is same as eos token. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer WhisperTokenizer. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+[eval step0] {'fleurs/hi': 'CER 0.487 WER 0.812 LID 1.00 loop 0.11', 'indicvoices/hi': 'CER 1.392 WER 1.810 LID 1.00 loop 0.28', 'kathbath/hi': 'CER 0.719 WER 1.193 LID 1.00 loop 0.08'}
+step 1/1000 loss 0.8937 lr 1.00e-05 3.3 utt/s  mem 41.9GB
+step 20/1000 loss 0.7730 lr 1.05e-04 12.8 utt/s  mem 44.5GB
+step 40/1000 loss 0.5256 lr 2.05e-04 14.6 utt/s  mem 44.5GB
+step 60/1000 loss 0.4380 lr 3.05e-04 15.3 utt/s  mem 44.5GB
+step 80/1000 loss 0.3918 lr 4.05e-04 15.7 utt/s  mem 44.5GB
+step 100/1000 loss 0.3760 lr 5.00e-04 15.9 utt/s  mem 44.5GB
+step 120/1000 loss 0.3418 lr 4.89e-04 16.0 utt/s  mem 44.5GB
+step 140/1000 loss 0.3265 lr 4.78e-04 16.1 utt/s  mem 44.5GB
+step 160/1000 loss 0.3175 lr 4.67e-04 16.1 utt/s  mem 44.5GB
+step 180/1000 loss 0.2822 lr 4.56e-04 16.2 utt/s  mem 44.5GB
+step 200/1000 loss 0.2796 lr 4.44e-04 16.3 utt/s  mem 47.3GB
+step 220/1000 loss 0.2794 lr 4.33e-04 16.3 utt/s  mem 47.3GB
+step 240/1000 loss 0.2615 lr 4.22e-04 16.3 utt/s  mem 47.3GB
+step 260/1000 loss 0.2645 lr 4.11e-04 16.3 utt/s  mem 47.3GB
+step 280/1000 loss 0.2618 lr 4.00e-04 16.4 utt/s  mem 47.3GB
+step 300/1000 loss 0.2355 lr 3.89e-04 16.4 utt/s  mem 47.3GB
+step 320/1000 loss 0.2424 lr 3.78e-04 16.4 utt/s  mem 47.3GB
+step 340/1000 loss 0.2364 lr 3.67e-04 16.5 utt/s  mem 47.3GB
+step 360/1000 loss 0.2356 lr 3.56e-04 16.5 utt/s  mem 47.3GB
+step 380/1000 loss 0.2324 lr 3.44e-04 16.5 utt/s  mem 47.3GB
+step 400/1000 loss 0.2268 lr 3.33e-04 16.5 utt/s  mem 47.3GB
+step 420/1000 loss 0.2214 lr 3.22e-04 16.5 utt/s  mem 47.3GB
+step 440/1000 loss 0.2180 lr 3.11e-04 16.5 utt/s  mem 47.3GB
+step 460/1000 loss 0.2303 lr 3.00e-04 16.5 utt/s  mem 47.3GB
+step 480/1000 loss 0.2107 lr 2.89e-04 16.5 utt/s  mem 47.3GB
+step 500/1000 loss 0.1957 lr 2.78e-04 16.5 utt/s  mem 47.3GB
+step 520/1000 loss 0.2174 lr 2.67e-04 16.6 utt/s  mem 47.3GB
+step 540/1000 loss 0.1996 lr 2.56e-04 16.6 utt/s  mem 47.3GB
+step 560/1000 loss 0.1989 lr 2.44e-04 16.6 utt/s  mem 47.3GB
+step 580/1000 loss 0.2010 lr 2.33e-04 16.6 utt/s  mem 47.3GB
+step 600/1000 loss 0.1927 lr 2.22e-04 16.6 utt/s  mem 47.3GB
+step 620/1000 loss 0.1894 lr 2.11e-04 16.6 utt/s  mem 47.3GB
+step 640/1000 loss 0.1866 lr 2.00e-04 16.6 utt/s  mem 47.3GB
+step 660/1000 loss 0.1849 lr 1.89e-04 16.6 utt/s  mem 47.3GB
+step 680/1000 loss 0.1835 lr 1.78e-04 16.6 utt/s  mem 47.3GB
+step 700/1000 loss 0.1824 lr 1.67e-04 16.6 utt/s  mem 47.3GB
+step 720/1000 loss 0.1817 lr 1.56e-04 16.6 utt/s  mem 47.3GB
+step 740/1000 loss 0.1727 lr 1.44e-04 16.6 utt/s  mem 47.3GB
+step 760/1000 loss 0.1745 lr 1.33e-04 16.6 utt/s  mem 47.3GB
+step 780/1000 loss 0.1792 lr 1.22e-04 16.6 utt/s  mem 47.3GB
+step 800/1000 loss 0.1835 lr 1.11e-04 16.6 utt/s  mem 47.3GB
+step 820/1000 loss 0.1713 lr 1.00e-04 16.6 utt/s  mem 47.3GB
+step 840/1000 loss 0.1645 lr 8.89e-05 16.6 utt/s  mem 47.3GB
+step 860/1000 loss 0.1685 lr 7.78e-05 16.6 utt/s  mem 47.3GB
+step 880/1000 loss 0.1675 lr 6.67e-05 16.6 utt/s  mem 47.3GB
+step 900/1000 loss 0.1506 lr 5.56e-05 16.6 utt/s  mem 47.3GB
+step 920/1000 loss 0.1645 lr 4.44e-05 16.6 utt/s  mem 47.3GB
+step 940/1000 loss 0.1550 lr 3.33e-05 16.6 utt/s  mem 47.3GB
+step 960/1000 loss 0.1580 lr 2.22e-05 16.6 utt/s  mem 47.3GB
+step 980/1000 loss 0.1549 lr 1.11e-05 16.6 utt/s  mem 47.3GB
+step 1000/1000 loss 0.1560 lr 0.00e+00 16.6 utt/s  mem 47.3GB
+[eval final] {'fleurs/hi': 'CER 0.095 WER 0.214 LID 1.00 loop 0.00', 'indicvoices/hi': 'CER 0.108 WER 0.271 LID 1.00 loop 0.00', 'kathbath/hi': 'CER 0.125 WER 0.374 LID 1.00 loop 0.00'}
+DONE /home/shibam/IE643/runs/e1_lora
+Loading weights:   0%|          | 0/479 [00:00<?, ?it/s]Loading weights:   0%|          | 2/479 [00:00<00:48,  9.74it/s]Loading weights:   3%|▎         | 15/479 [00:00<00:07, 58.01it/s]Loading weights:  12%|█▏        | 57/479 [00:00<00:02, 189.76it/s]Loading weights:  20%|██        | 96/479 [00:00<00:01, 258.13it/s]Loading weights:  29%|██▊       | 137/479 [00:00<00:01, 303.04it/s]Loading weights:  39%|███▊      | 185/479 [00:00<00:00, 345.85it/s]Loading weights:  49%|████▊     | 233/479 [00:00<00:00, 385.27it/s]Loading weights:  63%|██████▎   | 303/479 [00:00<00:00, 478.60it/s]Loading weights:  78%|███████▊  | 372/479 [00:01<00:00, 539.46it/s]Loading weights:  89%|████████▉ | 428/479 [00:01<00:00, 527.57it/s]Loading weights: 100%|██████████| 479/479 [00:01<00:00, 379.91it/s]
+mode qlora lr 0.0005 trainable 13.0M / 155.6M (8.3%) langs ['hi']
+train utts 50282 hours 90.0 by lang {'hi': 50282}
+step 1/1000 loss 0.9569 lr 1.00e-05 5.0 utt/s  mem 45.7GB
+step 20/1000 loss 0.8165 lr 1.05e-04 7.3 utt/s  mem 48.7GB
+step 40/1000 loss 0.5393 lr 2.05e-04 7.4 utt/s  mem 48.7GB
+step 60/1000 loss 0.4468 lr 3.05e-04 7.5 utt/s  mem 48.7GB
+step 80/1000 loss 0.3983 lr 4.05e-04 7.5 utt/s  mem 48.7GB
+step 100/1000 loss 0.3806 lr 5.00e-04 7.4 utt/s  mem 48.7GB
+step 120/1000 loss 0.3463 lr 4.89e-04 7.5 utt/s  mem 48.7GB
+step 140/1000 loss 0.3318 lr 4.78e-04 7.4 utt/s  mem 48.7GB
+step 160/1000 loss 0.3240 lr 4.67e-04 7.4 utt/s  mem 48.7GB
+step 180/1000 loss 0.2879 lr 4.56e-04 7.4 utt/s  mem 48.7GB
+step 200/1000 loss 0.2837 lr 4.44e-04 7.4 utt/s  mem 51.5GB
+step 220/1000 loss 0.2846 lr 4.33e-04 7.4 utt/s  mem 51.5GB
+step 240/1000 loss 0.2637 lr 4.22e-04 7.4 utt/s  mem 51.5GB
+step 260/1000 loss 0.2697 lr 4.11e-04 7.4 utt/s  mem 51.5GB
+step 280/1000 loss 0.2671 lr 4.00e-04 7.4 utt/s  mem 51.5GB
+step 300/1000 loss 0.2420 lr 3.89e-04 7.4 utt/s  mem 51.5GB
+step 320/1000 loss 0.2465 lr 3.78e-04 7.4 utt/s  mem 51.5GB
+step 340/1000 loss 0.2413 lr 3.67e-04 7.4 utt/s  mem 51.5GB
+step 360/1000 loss 0.2383 lr 3.56e-04 7.4 utt/s  mem 51.5GB
+step 380/1000 loss 0.2332 lr 3.44e-04 7.4 utt/s  mem 51.5GB
+step 400/1000 loss 0.2296 lr 3.33e-04 7.4 utt/s  mem 51.5GB
+step 420/1000 loss 0.2248 lr 3.22e-04 7.4 utt/s  mem 51.5GB
+step 440/1000 loss 0.2218 lr 3.11e-04 7.4 utt/s  mem 51.5GB
+step 460/1000 loss 0.2329 lr 3.00e-04 7.4 utt/s  mem 51.5GB
+step 480/1000 loss 0.2131 lr 2.89e-04 7.4 utt/s  mem 51.5GB
+step 500/1000 loss 0.1966 lr 2.78e-04 7.4 utt/s  mem 51.5GB
+step 520/1000 loss 0.2187 lr 2.67e-04 7.4 utt/s  mem 51.5GB
+step 540/1000 loss 0.2001 lr 2.56e-04 7.4 utt/s  mem 51.5GB
+step 560/1000 loss 0.2016 lr 2.44e-04 7.4 utt/s  mem 51.5GB
+step 580/1000 loss 0.2029 lr 2.33e-04 7.4 utt/s  mem 51.5GB
+step 600/1000 loss 0.1955 lr 2.22e-04 7.4 utt/s  mem 51.5GB
+step 620/1000 loss 0.1919 lr 2.11e-04 7.4 utt/s  mem 51.5GB
+step 640/1000 loss 0.1878 lr 2.00e-04 7.4 utt/s  mem 51.5GB
+step 660/1000 loss 0.1851 lr 1.89e-04 7.2 utt/s  mem 51.5GB
+step 680/1000 loss 0.1858 lr 1.78e-04 7.2 utt/s  mem 51.5GB
+step 700/1000 loss 0.1834 lr 1.67e-04 7.1 utt/s  mem 51.5GB
+step 720/1000 loss 0.1847 lr 1.56e-04 7.0 utt/s  mem 51.5GB
+step 740/1000 loss 0.1748 lr 1.44e-04 6.9 utt/s  mem 51.5GB
+step 760/1000 loss 0.1751 lr 1.33e-04 6.9 utt/s  mem 51.5GB
+step 780/1000 loss 0.1806 lr 1.22e-04 6.9 utt/s  mem 51.5GB
+step 800/1000 loss 0.1878 lr 1.11e-04 6.9 utt/s  mem 51.5GB
+step 820/1000 loss 0.1735 lr 1.00e-04 6.9 utt/s  mem 51.5GB
+step 840/1000 loss 0.1675 lr 8.89e-05 6.9 utt/s  mem 51.5GB
+step 860/1000 loss 0.1715 lr 7.78e-05 7.0 utt/s  mem 51.5GB
+step 880/1000 loss 0.1690 lr 6.67e-05 7.0 utt/s  mem 51.5GB
+step 900/1000 loss 0.1513 lr 5.56e-05 7.0 utt/s  mem 51.5GB
+step 920/1000 loss 0.1656 lr 4.44e-05 7.0 utt/s  mem 51.5GB
+step 940/1000 loss 0.1565 lr 3.33e-05 7.0 utt/s  mem 51.5GB
+step 960/1000 loss 0.1604 lr 2.22e-05 7.0 utt/s  mem 51.5GB
+step 980/1000 loss 0.1555 lr 1.11e-05 7.0 utt/s  mem 51.5GB
+step 1000/1000 loss 0.1579 lr 0.00e+00 7.0 utt/s  mem 51.5GB
+[transformers] The attention mask is not set with a batched input, and cannot be inferred from input because pad token is same as eos token. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer WhisperTokenizer. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+[eval final] {'fleurs/hi': 'CER 0.092 WER 0.213 LID 1.00 loop 0.00', 'indicvoices/hi': 'CER 0.114 WER 0.273 LID 1.00 loop 0.00', 'kathbath/hi': 'CER 0.127 WER 0.364 LID 1.00 loop 0.00'}
+DONE /home/shibam/IE643/runs/e1_qlora
+Loading weights:   0%|          | 0/479 [00:00<?, ?it/s]Loading weights: 100%|██████████| 479/479 [00:00<00:00, 6192.33it/s]
+mode full lr 1e-05 trainable 241.7M / 241.7M (100.0%) langs ['hi']
+train utts 50282 hours 90.0 by lang {'hi': 50282}
+W1003 01:09:16.442000 111454 torch/_inductor/utils.py:1806] [4/0] Not enough SMs to use max_autotune_gemm mode
+step 1/1000 loss 0.8234 lr 2.00e-07 1.1 utt/s  mem 33.0GB
+step 20/1000 loss 0.7776 lr 2.10e-06 8.4 utt/s  mem 37.2GB
+step 40/1000 loss 0.6164 lr 4.10e-06 11.7 utt/s  mem 37.2GB
+step 60/1000 loss 0.4972 lr 6.10e-06 13.6 utt/s  mem 37.2GB
+step 80/1000 loss 0.4430 lr 8.10e-06 14.7 utt/s  mem 37.2GB
+step 100/1000 loss 0.4147 lr 1.00e-05 15.5 utt/s  mem 37.2GB
+step 120/1000 loss 0.3692 lr 9.78e-06 16.1 utt/s  mem 37.2GB
+step 140/1000 loss 0.3480 lr 9.56e-06 16.5 utt/s  mem 37.2GB
+step 160/1000 loss 0.3363 lr 9.33e-06 16.9 utt/s  mem 37.2GB
+step 180/1000 loss 0.3248 lr 9.11e-06 17.2 utt/s  mem 39.6GB
+step 200/1000 loss 0.3137 lr 8.89e-06 17.4 utt/s  mem 39.6GB
+step 220/1000 loss 0.2892 lr 8.67e-06 17.6 utt/s  mem 39.6GB
+step 240/1000 loss 0.2961 lr 8.44e-06 17.8 utt/s  mem 39.6GB
+step 260/1000 loss 0.2846 lr 8.22e-06 17.9 utt/s  mem 39.6GB
+step 280/1000 loss 0.2729 lr 8.00e-06 18.0 utt/s  mem 39.6GB
+step 300/1000 loss 0.2735 lr 7.78e-06 18.2 utt/s  mem 39.6GB
+step 320/1000 loss 0.2719 lr 7.56e-06 18.3 utt/s  mem 39.6GB
+step 340/1000 loss 0.2638 lr 7.33e-06 18.3 utt/s  mem 39.6GB
+step 360/1000 loss 0.2539 lr 7.11e-06 18.4 utt/s  mem 39.6GB
+step 380/1000 loss 0.2519 lr 6.89e-06 18.5 utt/s  mem 39.6GB
+step 400/1000 loss 0.2462 lr 6.67e-06 18.5 utt/s  mem 39.6GB
+step 420/1000 loss 0.2484 lr 6.44e-06 18.6 utt/s  mem 39.6GB
+step 440/1000 loss 0.2446 lr 6.22e-06 18.6 utt/s  mem 39.6GB
+step 460/1000 loss 0.2468 lr 6.00e-06 18.7 utt/s  mem 39.6GB
+step 480/1000 loss 0.2454 lr 5.78e-06 18.7 utt/s  mem 39.6GB
+step 500/1000 loss 0.2331 lr 5.56e-06 18.8 utt/s  mem 39.6GB
+step 520/1000 loss 0.2273 lr 5.33e-06 18.8 utt/s  mem 39.6GB
+step 540/1000 loss 0.2221 lr 5.11e-06 18.9 utt/s  mem 39.6GB
+step 560/1000 loss 0.2250 lr 4.89e-06 18.9 utt/s  mem 39.6GB
+step 580/1000 loss 0.2195 lr 4.67e-06 18.9 utt/s  mem 39.6GB
+step 600/1000 loss 0.2185 lr 4.44e-06 18.9 utt/s  mem 39.6GB
+step 620/1000 loss 0.2195 lr 4.22e-06 19.0 utt/s  mem 39.6GB
+step 640/1000 loss 0.2174 lr 4.00e-06 19.0 utt/s  mem 39.6GB
+step 660/1000 loss 0.2207 lr 3.78e-06 19.0 utt/s  mem 39.6GB
+step 680/1000 loss 0.2179 lr 3.56e-06 19.0 utt/s  mem 39.6GB
+step 700/1000 loss 0.2118 lr 3.33e-06 19.0 utt/s  mem 39.6GB
+step 720/1000 loss 0.2171 lr 3.11e-06 19.1 utt/s  mem 39.6GB
+step 740/1000 loss 0.1990 lr 2.89e-06 19.1 utt/s  mem 39.6GB
+step 760/1000 loss 0.2168 lr 2.67e-06 19.1 utt/s  mem 39.6GB
+step 780/1000 loss 0.2167 lr 2.44e-06 19.1 utt/s  mem 39.6GB
+step 800/1000 loss 0.2144 lr 2.22e-06 19.1 utt/s  mem 39.6GB
+step 820/1000 loss 0.2119 lr 2.00e-06 19.1 utt/s  mem 39.6GB
+step 840/1000 loss 0.2065 lr 1.78e-06 19.1 utt/s  mem 39.6GB
+step 860/1000 loss 0.2063 lr 1.56e-06 19.2 utt/s  mem 39.6GB
+step 880/1000 loss 0.2036 lr 1.33e-06 19.2 utt/s  mem 39.6GB
+step 900/1000 loss 0.2013 lr 1.11e-06 19.2 utt/s  mem 39.6GB
+step 920/1000 loss 0.2028 lr 8.89e-07 19.2 utt/s  mem 39.6GB
+step 940/1000 loss 0.1994 lr 6.67e-07 19.2 utt/s  mem 39.6GB
+step 960/1000 loss 0.2074 lr 4.44e-07 19.2 utt/s  mem 39.6GB
+step 980/1000 loss 0.2028 lr 2.22e-07 19.2 utt/s  mem 39.6GB
+step 1000/1000 loss 0.2032 lr 0.00e+00 19.3 utt/s  mem 39.6GB
+[transformers] The attention mask is not set with a batched input, and cannot be inferred from input because pad token is same as eos token. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer WhisperTokenizer. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+[eval final] {'fleurs/hi': 'CER 0.101 WER 0.243 LID 1.00 loop 0.00', 'indicvoices/hi': 'CER 0.173 WER 0.362 LID 1.00 loop 0.01', 'kathbath/hi': 'CER 0.143 WER 0.413 LID 1.00 loop 0.00'}
+DONE /home/shibam/IE643/runs/e1_full
+E1_DONE

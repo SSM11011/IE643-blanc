@@ -1,0 +1,68 @@
+Loading weights:   0%|          | 0/479 [00:00<?, ?it/s]Loading weights: 100%|██████████| 479/479 [00:00<00:00, 5704.32it/s]
+mode lora lr 0.0005 trainable 13.0M / 254.7M (5.1%) langs ['hi', 'te', 'as']
+train utts 138616 hours 270.0 by lang {'hi': 50282, 'te': 48019, 'as': 40315}
+step 1/1200 loss 1.9182 lr 8.33e-06 3.0 utt/s  mem 42.1GB  lid-ctc 1.3869
+step 20/1200 loss 1.9049 lr 8.75e-05 11.2 utt/s  mem 47.6GB  lid-ctc 1.3370
+step 40/1200 loss 1.4472 lr 1.71e-04 12.8 utt/s  mem 47.6GB  lid-ctc 0.4926
+step 60/1200 loss 0.9717 lr 2.54e-04 13.4 utt/s  mem 47.6GB  lid-ctc 0.0133
+step 80/1200 loss 0.6442 lr 3.38e-04 13.8 utt/s  mem 47.6GB  lid-ctc 0.0118
+step 100/1200 loss 0.5259 lr 4.21e-04 14.0 utt/s  mem 47.6GB  lid-ctc 0.0096
+step 120/1200 loss 0.4573 lr 5.00e-04 14.1 utt/s  mem 47.6GB  lid-ctc 0.0088
+step 140/1200 loss 0.4084 lr 4.91e-04 14.2 utt/s  mem 47.6GB  lid-ctc 0.0076
+step 160/1200 loss 0.3833 lr 4.81e-04 14.3 utt/s  mem 47.6GB  lid-ctc 0.0081
+step 180/1200 loss 0.3732 lr 4.72e-04 14.4 utt/s  mem 47.6GB  lid-ctc 0.0078
+step 200/1200 loss 0.3490 lr 4.63e-04 14.4 utt/s  mem 47.6GB  lid-ctc 0.0084
+step 220/1200 loss 0.3227 lr 4.54e-04 14.5 utt/s  mem 47.6GB  lid-ctc 0.0073
+step 240/1200 loss 0.3239 lr 4.44e-04 14.5 utt/s  mem 47.6GB  lid-ctc 0.0068
+step 260/1200 loss 0.3049 lr 4.35e-04 14.6 utt/s  mem 47.6GB  lid-ctc 0.0065
+step 280/1200 loss 0.3049 lr 4.26e-04 14.6 utt/s  mem 47.6GB  lid-ctc 0.0065
+step 300/1200 loss 0.2847 lr 4.17e-04 14.6 utt/s  mem 47.6GB  lid-ctc 0.0070
+step 320/1200 loss 0.2865 lr 4.07e-04 14.6 utt/s  mem 47.6GB  lid-ctc 0.0065
+step 340/1200 loss 0.2853 lr 3.98e-04 14.6 utt/s  mem 47.6GB  lid-ctc 0.0064
+step 360/1200 loss 0.2800 lr 3.89e-04 14.7 utt/s  mem 47.6GB  lid-ctc 0.0064
+step 380/1200 loss 0.2693 lr 3.80e-04 14.7 utt/s  mem 47.6GB  lid-ctc 0.0065
+step 400/1200 loss 0.2557 lr 3.70e-04 14.7 utt/s  mem 47.6GB  lid-ctc 0.0068
+step 420/1200 loss 0.2632 lr 3.61e-04 14.7 utt/s  mem 47.6GB  lid-ctc 0.0071
+step 440/1200 loss 0.2488 lr 3.52e-04 14.7 utt/s  mem 47.6GB  lid-ctc 0.0063
+step 460/1200 loss 0.2483 lr 3.43e-04 14.7 utt/s  mem 47.6GB  lid-ctc 0.0058
+step 480/1200 loss 0.2343 lr 3.33e-04 14.7 utt/s  mem 47.6GB  lid-ctc 0.0058
+step 500/1200 loss 0.2379 lr 3.24e-04 14.7 utt/s  mem 47.6GB  lid-ctc 0.0059
+step 520/1200 loss 0.2439 lr 3.15e-04 14.7 utt/s  mem 47.6GB  lid-ctc 0.0055
+step 540/1200 loss 0.2437 lr 3.06e-04 14.7 utt/s  mem 47.6GB  lid-ctc 0.0054
+step 560/1200 loss 0.2407 lr 2.96e-04 14.7 utt/s  mem 47.6GB  lid-ctc 0.0056
+step 580/1200 loss 0.2193 lr 2.87e-04 14.8 utt/s  mem 47.6GB  lid-ctc 0.0045
+step 600/1200 loss 0.2272 lr 2.78e-04 14.8 utt/s  mem 47.6GB  lid-ctc 0.0053
+step 620/1200 loss 0.2236 lr 2.69e-04 14.8 utt/s  mem 47.6GB  lid-ctc 0.0052
+step 640/1200 loss 0.2112 lr 2.59e-04 14.8 utt/s  mem 47.6GB  lid-ctc 0.0041
+step 660/1200 loss 0.2084 lr 2.50e-04 14.8 utt/s  mem 47.6GB  lid-ctc 0.0039
+step 680/1200 loss 0.2169 lr 2.41e-04 14.8 utt/s  mem 47.6GB  lid-ctc 0.0047
+step 700/1200 loss 0.2034 lr 2.31e-04 14.8 utt/s  mem 47.6GB  lid-ctc 0.0043
+step 720/1200 loss 0.2080 lr 2.22e-04 14.8 utt/s  mem 47.6GB  lid-ctc 0.0042
+step 740/1200 loss 0.2039 lr 2.13e-04 14.8 utt/s  mem 47.6GB  lid-ctc 0.0042
+step 760/1200 loss 0.2058 lr 2.04e-04 14.8 utt/s  mem 47.6GB  lid-ctc 0.0050
+step 780/1200 loss 0.1983 lr 1.94e-04 14.8 utt/s  mem 47.6GB  lid-ctc 0.0038
+step 800/1200 loss 0.2048 lr 1.85e-04 14.8 utt/s  mem 47.6GB  lid-ctc 0.0040
+step 820/1200 loss 0.2009 lr 1.76e-04 14.8 utt/s  mem 47.6GB  lid-ctc 0.0037
+step 840/1200 loss 0.2005 lr 1.67e-04 14.8 utt/s  mem 47.6GB  lid-ctc 0.0041
+step 860/1200 loss 0.1921 lr 1.57e-04 14.8 utt/s  mem 47.6GB  lid-ctc 0.0033
+step 880/1200 loss 0.1862 lr 1.48e-04 14.8 utt/s  mem 47.6GB  lid-ctc 0.0033
+step 900/1200 loss 0.1868 lr 1.39e-04 14.8 utt/s  mem 47.6GB  lid-ctc 0.0043
+step 920/1200 loss 0.1843 lr 1.30e-04 14.8 utt/s  mem 47.6GB  lid-ctc 0.0032
+step 940/1200 loss 0.1854 lr 1.20e-04 14.8 utt/s  mem 47.6GB  lid-ctc 0.0037
+step 960/1200 loss 0.1880 lr 1.11e-04 14.8 utt/s  mem 47.6GB  lid-ctc 0.0031
+step 980/1200 loss 0.1785 lr 1.02e-04 14.8 utt/s  mem 47.6GB  lid-ctc 0.0031
+step 1000/1200 loss 0.1817 lr 9.26e-05 14.8 utt/s  mem 47.6GB  lid-ctc 0.0031
+step 1020/1200 loss 0.1823 lr 8.33e-05 14.8 utt/s  mem 47.6GB  lid-ctc 0.0033
+step 1040/1200 loss 0.1803 lr 7.41e-05 14.8 utt/s  mem 47.6GB  lid-ctc 0.0031
+step 1060/1200 loss 0.1886 lr 6.48e-05 14.8 utt/s  mem 47.6GB  lid-ctc 0.0030
+step 1080/1200 loss 0.1827 lr 5.56e-05 14.8 utt/s  mem 47.6GB  lid-ctc 0.0030
+step 1100/1200 loss 0.1756 lr 4.63e-05 14.8 utt/s  mem 47.6GB  lid-ctc 0.0033
+step 1120/1200 loss 0.1740 lr 3.70e-05 14.8 utt/s  mem 47.6GB  lid-ctc 0.0031
+step 1140/1200 loss 0.1706 lr 2.78e-05 14.8 utt/s  mem 47.6GB  lid-ctc 0.0028
+step 1160/1200 loss 0.1778 lr 1.85e-05 14.8 utt/s  mem 47.6GB  lid-ctc 0.0029
+step 1180/1200 loss 0.1750 lr 9.26e-06 14.8 utt/s  mem 47.6GB  lid-ctc 0.0025
+step 1200/1200 loss 0.1825 lr 0.00e+00 14.8 utt/s  mem 47.6GB  lid-ctc 0.0024
+[transformers] The attention mask is not set with a batched input, and cannot be inferred from input because pad token is same as eos token. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer WhisperTokenizer. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+[eval final] {'fleurs/as': 'CER 0.158 WER 0.428 LID 1.00 LIDhead 0.98 loop 0.03', 'fleurs/hi': 'CER 0.093 WER 0.259 LID 0.98 LIDhead 0.98 loop 0.00', 'fleurs/te': 'CER 0.110 WER 0.413 LID 1.00 LIDhead 1.00 loop 0.00', 'indicvoices/as': 'CER 0.246 WER 0.559 LID 0.84 LIDhead 0.80 loop 0.00', 'indicvoices/hi': 'CER 0.122 WER 0.298 LID 0.83 LIDhead 0.92 loop 0.00', 'indicvoices/te': 'CER 0.210 WER 0.519 LID 0.98 LIDhead 0.97 loop 0.05', 'kathbath/hi': 'CER 0.132 WER 0.372 LID 1.00 LIDhead 1.00 loop 0.00', 'kathbath/te': 'CER 0.123 WER 0.524 LID 1.00 LIDhead 1.00 loop 0.00'}
+DONE /home/shibam/IE643/runs/e2_l0.3

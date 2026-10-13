@@ -1,0 +1,67 @@
+\chapter{The Demo: Long Audio, VAD Chunking and One Language Decision}
+\chaptermark{The Demo}
+\label{ch:demo}
+
+\section{What the demo does}
+
+\file{src/demo.py} is a Gradio web app: upload or record audio; it shows the detected language with closed-set confidences, the
+encoder head's opinion, and the transcript. The language can also be forced from a drop-down.
+
+\section{Why the audio must be cut}
+
+The model was trained on single utterances of at most 30 s and at most 440 text tokens. Real recordings are longer. The first
+version simply cut fixed 30-s windows. Two failures were observed:
+\begin{enumerate}
+\item On a packed 30-s window of a 51-s clip the model \emph{skipped a whole sentence}, and the LID head's posteriors became nearly
+uniform (it had only seen single utterances).
+\item 25-s Telugu chunks overflowed the 440-token budget (Telugu costs up to about 45 tokens per second; Exercise~\ref{exr:ex27}).
+\end{enumerate}
+
+\section{VAD-based chunking}
+
+\begin{definition}{Voice activity detection (VAD)}{vad}
+A VAD model labels short frames as speech or non-speech. Silero VAD (a small neural network) returns speech segments
+$[s_1,e_1],[s_2,e_2],\dots$ in samples (minimum pause here: 200 ms).
+\end{definition}
+
+\begin{definition}{The chunking rule}{chunk}
+Let $L_{\max}=12\,\text{s}\cdot16000$. If the clip is at most $L_{\max}$, keep it whole. Otherwise the candidate cut points are the
+midpoints of the pauses, $c_k=\lfloor(e_k+s_{k+1})/2\rfloor$. Starting at $0$, repeatedly cut at the \emph{last} candidate within
+$L_{\max}$ of the current start (greedy packing); if none exists (a single stretch of speech longer than 12 s), cut hard at
+$L_{\max}$. Chunks shorter than 0.3 s are dropped unless nothing else is left.
+\end{definition}
+
+Cutting in pauses keeps words intact; greedy packing makes chunks as long as allowed, which gives the decoder more context. No audio
+is discarded.
+
+\section{One language for the whole clip}
+
+Each chunk $c$ gives a score vector $\mathrm{score}_c(\ell)$ (token log-probability plus the calibrated rule terms of
+Chapter~\ref{ch:svarah}). The clip's language is
+\[
+\hat\ell=\argmax_\ell\sum_c\mathrm{score}_c(\ell),
+\]
+and the displayed confidence is $\softmax_\ell\big(\sum_c\mathrm{score}_c(\ell)\big)$.
+
+\begin{proposition}{Summing log-scores is naive-Bayes pooling}{nb}
+If chunks were conditionally independent given the language and each $\mathrm{score}_c$ were a log-likelihood, then
+$\sum_c\mathrm{score}_c(\ell)=\log\prod_cp(\text{chunk}_c\mid\ell)$, the log-likelihood of the whole clip, and its argmax is the
+maximum-likelihood language.
+\end{proposition}
+\begin{proof}
+Independence turns the joint likelihood into a product; $\log$ turns the product into a sum.
+\end{proof}
+In practice chunks are not independent (same speaker, same channel), so the pooled confidence is over-confident for long clips; the
+argmax is still a sensible decision.
+
+All chunks are then decoded with the chosen language (ASCII-only if English), and the transcripts are joined with spaces.
+
+\section{Measured quality}
+
+On 50--70 s concatenations of FLEURS utterances the chunked demo gives CER 0.05 (Assamese), 0.15 (Hindi) and 0.18 (Telugu).
+
+\begin{vivatip}[: bug fixed in the fourth review]
+Gradio delivers integer PCM. The first version detected ``integer audio'' by checking $\max|x|>1$ \emph{after} casting to float:
+silent int16 audio was not rescaled, and int32 audio was divided by 32768 instead of $2^{31}$. It now checks the dtype and divides by
+\texttt{np.iinfo(dtype).max+1}.
+\end{vivatip}

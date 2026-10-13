@@ -1,0 +1,131 @@
+\chapter{Whisper: Architecture, Tokenizer, Prompt and Built-in LID}
+\chaptermark{Whisper}
+\label{ch:whisper}
+
+\section{What Whisper is}
+
+Whisper (Radford et al., 2023) is an encoder--decoder Transformer (Chapter~\ref{ch:seq2seq}) trained by OpenAI on about 680{,}000
+hours of weakly labelled web audio in about 100 languages. It does transcription, translation to English, timestamps and language
+identification, all through the decoder's token stream.
+
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+ & Whisper-small & large-v3 & \textbf{large-v3-turbo} (our base)\\
+\midrule
+Parameters & 244 M & 1.55 B & 809 M\\
+Encoder layers & 12 & 32 & 32\\
+Decoder layers & 12 & 32 & \textbf{4}\\
+Width $d$ / heads & 768 / 12 & 1280 / 20 & 1280 / 20\\
+MLP width & 3072 & 5120 & 5120\\
+Mel bins $M$ & 80 & 128 & 128\\
+Vocabulary $V$ & 51{,}865 & 51{,}866 & 51{,}866\\
+Max decoder positions & 448 & 448 & 448\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\emph{Turbo} is large-v3 with the decoder pruned from 32 to 4 layers and then fine-tuned further. Generation runs one decoder pass
+per token, so a 4-layer decoder makes decoding about 6 times faster, while the large 32-layer encoder keeps most of the acoustic
+quality. Whisper-small was the development model for experiments E1--E4 (Chapter~\ref{ch:results}); turbo is the final model.
+
+\section{Byte-level BPE and why Indic text is expensive}
+
+\begin{definition}{Byte-level byte-pair encoding (BPE)}{bpe}
+Text is first written as UTF-8 bytes (256 base symbols). BPE training repeatedly finds the most frequent adjacent pair of symbols in a
+training corpus and merges it into a new symbol, until the vocabulary has the desired size. Tokenising a new string applies the
+learned merges greedily. Any string can be tokenised (in the worst case one token per byte).
+\end{definition}
+
+UTF-8 encodes an ASCII letter in 1 byte and a character of an Indic script in 3 bytes. Whisper's merges were learned mostly from
+English-heavy text, so frequent English words become single tokens, while Indic text is split into short pieces, often single
+characters or bytes.
+
+\begin{example}{Token cost measured on our data}{tokcost}
+Measured with \file{prep_tokens.py} on the normalised transcripts: Indic speech costs \textbf{17--45 Whisper tokens per second}, English
+about 3. Of Telugu, Assamese and Bengali reference transcripts, 41--58\% exceed 200 tokens, and some exceed 448, the decoder's
+hard limit.
+\end{example}
+
+\begin{proposition}{Token budget}{budget}
+The decoder sequence has at most 448 positions. Our prompt uses 4 (Section~\ref{sec:prompt}) and the target ends with EOT. So a
+transcript can be learned in one pass only if it has at most $448-4-1=443$ text tokens. The project uses 440, leaving a small margin.
+\end{proposition}
+
+\begin{incode}
+\file{common.py: MAX_TEXT_TOKENS = 440}. Training drops utterances with more than 440 text tokens (8{,}131 utterances, 2.1\% of
+the training split). Test keeps everything; the 550 over-budget test utterances simply count as errors (they cannot be completed).
+All decoding uses \texttt{max\_new\_tokens=440}. The first baseline run used 200, which truncated Indic outputs (bug 5).
+\end{incode}
+
+\section{The prompt and special tokens}
+\label{sec:prompt}
+
+Whisper's decoder is conditioned by special tokens. For plain transcription without timestamps the sequence is
+\[
+\underbrace{\texttt{SOT}}_{\text{start}}\ \ \underbrace{\tok{hi}}_{\text{language}}\ \ \tok{transcribe}\ \ \tok{notimestamps}\ \
+\text{text tokens}\ \dots\ \ \texttt{EOT}.
+\]
+
+\begin{definition}{The project's training sequence}{trainseq}
+For an utterance of language $\ell$ with text tokens $w_1..w_K$:
+\begin{align*}
+\text{decoder input}&=[\texttt{SOT},\ \tok{$\ell$},\ \tok{transcribe},\ \tok{notimestamps},\ w_1,\dots,w_K]\\
+\text{labels}&=[\tok{$\ell$},\ \tok{transcribe},\ \tok{notimestamps},\ w_1,\dots,w_K,\ \texttt{EOT}]
+\end{align*}
+The first label is the language token: \textbf{the language is a supervised target}, predicted from \texttt{SOT} and the audio alone.
+\end{definition}
+
+The usual HuggingFace recipe puts the language in the \emph{forced} prefix, so the model is told the language and never learns to
+predict it. That is the documented cause of LID collapse after fine-tuning. Making it a label keeps LID trained.
+
+\section{Built-in language identification}
+
+\begin{definition}{Closed-set decoder-token LID}{tokenlid}
+Feed only $[\texttt{SOT}]$ to the decoder. Let $\vz_1$ be the logits of the first predicted position. Restrict to the language
+tokens of $\mathcal L$:
+\[
+\hat p_{\text{tok}}(\ell\mid\vx)=\frac{\exp z_{1,\mathrm{id}(\ell)}}{\sum_{\ell'\in\mathcal L}\exp z_{1,\mathrm{id}(\ell')}},
+\qquad \hat\ell=\argmax_{\ell\in\mathcal L}\hat p_{\text{tok}}(\ell\mid\vx).
+\]
+\end{definition}
+
+This is a closed-set softmax over 7 of the $\approx$51{,}867 logits. Vanilla Whisper's version of this collapses outside
+English and Hindi on our test data: Telugu 14\%, Assamese 0\%, Bengali 51\%, Marathi 52\% (Chapter~\ref{ch:results}).
+
+\begin{vivatip}[: Odia]
+Whisper's 100 languages do \emph{not} include Odia. This was checked three ways: the official \file{whisper/tokenizer.py}, the HF
+\texttt{generation\_config.lang\_to\_id} (100 entries, no \texttt{or} or \texttt{od}), and the vocabulary itself. So for vanilla
+Whisper, Odia cannot be predicted or forced at all, and Odia CER is above 1 (it writes Odia speech in other scripts or loops).
+\end{vivatip}
+
+\section{Baseline numbers that motivated the project}
+
+Zero-shot test CER (100 utterances per set, mean over non-code-switched corpora of each language; \file{reports/baselines/summary.md}):
+
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+Language & Whisper-small & Whisper-turbo & IndicConformer-600M & Turbo LID accuracy\\
+\midrule
+English & 0.04 & 0.03 & n/a & 100\%\\
+Hindi & 1.09 & 0.21 & 0.05 & 81\%\\
+Marathi & 1.13 & 0.40 & 0.05 & 52\%\\
+Bengali & 1.68 & 0.72 & 0.05 & 51\%\\
+Telugu & 2.11 & 0.66 & 0.07 & 14\%\\
+Assamese & 1.58 & 1.90 & 0.06 & 0\%\\
+Odia & 1.66 & 1.46 & 0.07 & no token\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Vanilla Whisper is usable only for English and Hindi. IndicConformer (an Indic-specialised Conformer trained on AI4Bharat data) is far
+better on Indic CER but has no English and no LID. The project's aim is to close as much of this gap as possible \emph{inside one
+model that also does English, code-switching and LID}.
+
+\begin{exercise}{Why does a 4-layer decoder hardly hurt accuracy?}{turbo}
+\textit{Solution.} In ASR most of the work is acoustic: deciding which sounds were spoken. That is done by the encoder, which is
+kept at 32 layers. The decoder mainly acts as a conditional language model that reads the encoder through cross-attention; a shallow
+decoder is enough for that. Since generation cost is proportional to decoder depth times number of tokens, cutting the decoder
+gives the speed-up for little accuracy loss.
+\end{exercise}

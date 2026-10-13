@@ -1,0 +1,98 @@
+{
+ "args": {
+  "model": "/home/shibam/IE643/models/whisper-small",
+  "name": "e4_aug2",
+  "mode": "lora",
+  "langs": "hi,te,as",
+  "cs": false,
+  "manifest": "/home/shibam/IE643/data/processed/splits/train_mix_epoch0.jsonl",
+  "steps": 1200,
+  "bs": 32,
+  "lr": null,
+  "warmup": 0.1,
+  "r": 32,
+  "alpha": 64,
+  "workers": 12,
+  "eval_n": 64,
+  "eval_start": false,
+  "freeze_enc_frac": 0.0,
+  "seed": 0,
+  "no_compile": false,
+  "lid_ctc": 0.0,
+  "lid_detach": false,
+  "aug": true,
+  "ns_weight": 30.0,
+  "nonspeech": 0.05
+ },
+ "lr": 0.0005,
+ "trainable_M": 12.976128,
+ "train_time_s": 2580.162650823593,
+ "utt_per_s": 14.882782659133005,
+ "final_loss": 0.24893865317106248,
+ "eval_final": {
+  "fleurs/as": {
+   "cer": 0.15904961565338924,
+   "wer": 0.440423654015887,
+   "lid_acc": 1.0,
+   "lid_acc_head": null,
+   "loop_rate": 0.015625,
+   "n": 64
+  },
+  "fleurs/hi": {
+   "cer": 0.1295833880930477,
+   "wer": 0.28552717747216766,
+   "lid_acc": 0.984375,
+   "lid_acc_head": null,
+   "loop_rate": 0.015625,
+   "n": 64
+  },
+  "fleurs/te": {
+   "cer": 0.11600625651720542,
+   "wer": 0.4439918533604888,
+   "lid_acc": 1.0,
+   "lid_acc_head": null,
+   "loop_rate": 0.0,
+   "n": 64
+  },
+  "indicvoices/as": {
+   "cer": 0.30092016911216113,
+   "wer": 0.6265984654731458,
+   "lid_acc": 0.765625,
+   "lid_acc_head": null,
+   "loop_rate": 0.03125,
+   "n": 64
+  },
+  "indicvoices/hi": {
+   "cer": 0.13415141430948418,
+   "wer": 0.31822386679000925,
+   "lid_acc": 0.84375,
+   "lid_acc_head": null,
+   "loop_rate": 0.0,
+   "n": 64
+  },
+  "indicvoices/te": {
+   "cer": 0.22533704258506312,
+   "wer": 0.563150074294205,
+   "lid_acc": 0.96875,
+   "lid_acc_head": null,
+   "loop_rate": 0.03125,
+   "n": 64
+  },
+  "kathbath/hi": {
+   "cer": 0.13801884390119684,
+   "wer": 0.38461538461538464,
+   "lid_acc": 1.0,
+   "lid_acc_head": null,
+   "loop_rate": 0.0,
+   "n": 64
+  },
+  "kathbath/te": {
+   "cer": 0.12127272727272727,
+   "wer": 0.5251798561151079,
+   "lid_acc": 1.0,
+   "lid_acc_head": null,
+   "loop_rate": 0.0,
+   "n": 64
+  }
+ }
+}

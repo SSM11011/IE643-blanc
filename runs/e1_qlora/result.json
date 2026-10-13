@@ -1,0 +1,50 @@
+{
+ "args": {
+  "model": "/home/shibam/IE643/models/whisper-small",
+  "name": "e1_qlora",
+  "mode": "qlora",
+  "langs": "hi",
+  "cs": false,
+  "manifest": "/home/shibam/IE643/data/processed/splits/train_mix_epoch0.jsonl",
+  "steps": 1000,
+  "bs": 32,
+  "lr": null,
+  "warmup": 0.1,
+  "r": 32,
+  "alpha": 64,
+  "workers": 12,
+  "eval_n": 96,
+  "eval_start": false,
+  "freeze_enc_frac": 0.0,
+  "seed": 0,
+  "no_compile": true
+ },
+ "lr": 0.0005,
+ "trainable_M": 12.976128,
+ "train_time_s": 4547.294130086899,
+ "utt_per_s": 7.0371520009782556,
+ "final_loss": 0.15815657243132591,
+ "eval_final": {
+  "fleurs/hi": {
+   "cer": 0.09191715542521994,
+   "wer": 0.21315192743764172,
+   "lid_acc": 1.0,
+   "loop_rate": 0.0,
+   "n": 96
+  },
+  "indicvoices/hi": {
+   "cer": 0.11362405200433369,
+   "wer": 0.2726168791742562,
+   "lid_acc": 1.0,
+   "loop_rate": 0.0,
+   "n": 96
+  },
+  "kathbath/hi": {
+   "cer": 0.12690719798958894,
+   "wer": 0.3638042474607572,
+   "lid_acc": 1.0,
+   "loop_rate": 0.0,
+   "n": 96
+  }
+ }
+}

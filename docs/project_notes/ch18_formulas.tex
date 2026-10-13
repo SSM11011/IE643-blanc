@@ -1,0 +1,109 @@
+\chapter{Formula Sheet and Viva Practice}
+\chaptermark{Formula Sheet and Viva}
+\label{ch:formulas}
+
+\section{One-page formula sheet}
+
+\begin{tcolorbox}[colback=white,colframe=titleblue,title={Audio and Whisper}]
+$x[n]=x_c(n/f_s)$, $f_s=16$ kHz $\cdot$ STFT 25 ms window, 10 ms hop $\cdot$ $\mathrm{mel}(f)=2595\log_{10}(1+f/700)$ $\cdot$
+$\bm F=(\max(L,\max L-8)+4)/4$, $L=\log_{10}\max(\mathcal M,10^{-10})$ $\cdot$ input $128\times3000$ $\cdot$ encoder 1500 frames, 50/s
+$\cdot$ $T=\min(1500,\lfloor50D\rfloor+1)$ $\cdot$ decoder $\le448$ positions; text $\le440$ tokens $\cdot$ Indic 17--45 tokens/s,
+English $\approx3$.
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=white,colframe=titleblue,title={Metrics and statistics}]
+$D[i,j]=\min\{D[i-1,j]+1,\,D[i,j-1]+1,\,D[i-1,j-1]+\1[r_i\ne h_j]\}$ $\cdot$ $\CER=\sum(S+D+I)/\sum N$ (can exceed 1) $\cdot$
+$|m-n|\le d\le\max(m,n)$ $\cdot$ bootstrap: resample utterances with replacement, $B=2000$, percentile 95\% CI $\cdot$ paired:
+same indices for both systems, significant if CI of $\Delta$ excludes 0 $\cdot$ routing cost $=\CER_{\text{pred}}-\CER_{\text{oracle}}$.
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=white,colframe=titleblue,title={Model and training}]
+$p(\vy\mid\vx)=\prod_tp(y_t\mid\vy_{<t},\vx)$ $\cdot$ $\nabla_{\vz}(-\log\softmax(\vz)_y)=\bm p-\bm e_y$ $\cdot$
+$\mathrm{Attn}=\softmax(QK^\top/\sqrt{d_k}+M)V$ $\cdot$ LoRA $W_0+\frac\alpha rBA$, $B_0=0$, $r=32$, $\alpha=64$, params $r(d_{\text{in}}+d_{\text{out}})$
+$\cdot$ trained LoRA 20.48 M (22 enc + 4 dec layers) $\cdot$ \tok{or} $=$ row $51866$, init from \tok{bn}, gradient mask, wd 0 $\cdot$
+$\mathcal L=\mathcal L_{\text{CE}}+0.3\,\frac{1}{|\mathcal S|}\sum_i\ell_{\text{CTC},i}/T_i$ $\cdot$ AdamW $(0.9,0.98,10^{-6})$, lr $3\times10^{-4}$
+(LoRA), $2.5\times10^{-4}$ (row), $10^{-3}$ (head) $\cdot$ warm-up 10\% then linear decay $\cdot$ clip norm 1 $\cdot$ $11{,}000\times32$.
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=white,colframe=titleblue,title={CTC, data, robustness, LID rule}]
+$p(\vy\mid\vx)=\sum_{\bm\pi\in\mathcal B^{-1}(\vy)}\prod_tp_t(\pi_t)$ $\cdot$ single label: $\sum_{s\le e}\prod_{t<s}p_t(\blank)\prod_{s}^{e}p_t(\ell)\prod_{t>e}p_t(\blank)$,
+$T(T+1)/2$ paths $\cdot$ head decision $\argmax_\ell\sum_tp_t(\ell)$ $\cdot$ mix: $s_c=h_c\min(3,h_{\max}/h_c)$, share cap 0.7, 90 h per
+language, total $7\cdot90/(1-0.1)=700$ h $\cdot$ noise gain $g=\sqrt{P_s/(P_n10^{\sigma/10})}$, $\sigma\sim\mathcal U(0,20)$ $\cdot$
+speed $\pm10\%$ only if $<27$ s $\cdot$ 5\% non-speech, target EOT, language masked $\cdot$ hallucination $=$ $>5$ tokens on noise,
+with \texttt{begin\_suppress\_tokens} off $\cdot$ score $=\log\hat p_{\text{tok}}+22.25\,\1[\text{en}]+2\log q$.
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=white,colframe=titleblue,title={Headline numbers (test, 23 sets $\times$ 100 utterances)}]
+Mean CER: vanilla 0.696 $\to$ Stage 2 oracle \textbf{0.113}, predicted 0.147, predicted + fixes \textbf{0.126} $\cdot$
+IndicConformer 0.104 over its 20 sets (significantly better on 17 of 18 monolingual Indic sets) $\cdot$ MUCS hi/bn 0.306/0.213 vs
+IndicConformer 0.545/0.501 $\cdot$ hallucination $\approx1.0\to\le0.01$ $\cdot$ Svarah 0.032 (vanilla) vs 0.227 oracle, 0.114 ASCII,
+0.311 predicted + fixes $\cdot$ Odia Kathbath 0.041, FLEURS 0.145 $\cdot$ 16.6 h training at 5.9 utt/s.
+\end{tcolorbox}
+
+\section{Likely viva questions, with answer sketches}
+
+\begin{enumerate}[leftmargin=*,label=\textbf{Q\arabic*.}]
+\item \textbf{Why Whisper and not IndicConformer as the base?} IndicConformer has no English, no LID and no code-switch support; the
+project requires one model with integrated LID. Whisper's decoder already has a language token and a multilingual text decoder,
+and turbo is fast. The price: worse in-domain monolingual Indic CER.
+
+\item \textbf{Why does vanilla Whisper's CER exceed 1?} CER counts insertions; repetition loops make hypotheses much longer than
+references (Proposition~\ref{prop:cerbound}).
+
+\item \textbf{How did you add Odia?} New row 51866 in the tied embedding, initialised from Bengali, gradient-masked so only that row
+trains, own lr $2.5\times10^{-4}$, weight decay 0 (Proposition~\ref{prop:adamrow}). Test LID 1.00 on FLEURS/Kathbath, CER 0.041 on
+Kathbath.
+
+\item \textbf{Why initialise from Bengali?} Closest language and script among Whisper's tokens; the clone starts as an exact tie
+(Proposition~\ref{prop:tie}) that training only has to break.
+
+\item \textbf{What does the LID-CTC head add?} A frame-level LID signal straight into the encoder, and a second LID opinion. E2: token
+LID on IndicVoices Assamese 0.73 $\to$ 0.84; at scale the head lifts Assamese recall 0.82 $\to$ 0.92.
+
+\item \textbf{Derive the single-label CTC probability.} Proposition~\ref{prop:ctc1}: valid alignments are blanks, one run of $\ell$,
+blanks.
+
+\item \textbf{Why divide the CTC loss by $T$?} Its scale grows linearly with $T$ ($\approx T\log 8$ at initialisation), which would
+dominate the token cross-entropy.
+
+\item \textbf{Why LoRA and not full fine-tuning?} E1: LoRA equal or better (IndicVoices 0.108 vs 0.173), 18$\times$ fewer trainable
+parameters, merges into the base at no inference cost.
+
+\item \textbf{How many parameters did you actually train?} 20.48 M LoRA + 1{,}280 (Odia row) + 10{,}248 (head); the logged 86.9 M includes
+the whole 66.4 M embedding matrix, of which only one row moves.
+
+\item \textbf{Why balance the data, and how?} The mix weights define the objective (Proposition~\ref{prop:mixobj}). Two-stage
+upsampling: within-language toward the largest corpus (cap 3$\times$, share cap 70\%), then 90 h per language. E3: Assamese 0.342
+$\to$ 0.278 on IndicVoices.
+
+\item \textbf{How do you know the test numbers are honest?} Speaker-disjoint splits (fixed 1{,}217 shared IndicVoices speakers),
+text-leakage removal, test used only for final models, paired bootstrap CIs, exact reproduction after refactoring.
+
+\item \textbf{Why is a non-significant difference not ``equal''?} The CI includes 0 but also includes differences of $\pm0.015$; we
+cannot distinguish the systems with 100 utterances, which is different from showing they are the same.
+
+\item \textbf{What went wrong with hallucination measurement?} \texttt{begin\_suppress\_tokens} forbids EOT at the first step, so an
+empty output was impossible (bug 10). With it disabled: 2--4\% (Whisper-small), $\le$1\% (Stage 2).
+
+\item \textbf{Why does Indian English fail and how did you mitigate it?} No Indian-accented English in training; accented English
+resembles Indic training audio, so it is mapped to Indic scripts and labels. ASCII-only English decoding (0.227 $\to$ 0.114 oracle) and
+a calibrated LID rule (LID 0.13 $\to$ 0.51). Real fix: training data or distillation.
+
+\item \textbf{Is the calibrated rule fitted on test?} No: dev split plus a speaker-disjoint Svarah calibration set (profiles absent from
+the scored test utterances).
+
+\item \textbf{Why not a denoiser?} Evidence that enhancement before strong ASR hurts; training-time augmentation instead. Stage 2
+degrades gradually: FLEURS-hi 0.056 clean, 0.130 at 0 dB.
+
+\item \textbf{What is the oracle-vs-predicted gap and what is yours?} The cost of LID errors: 0.113 $\to$ 0.126 mean with the
+calibrated rule; large where LID is weak (Lahaja 0.064 $\to$ 0.147).
+
+\item \textbf{Why is the demo chunked at 12 s and not 30 s?} Packed 30-s windows skipped speech and confused the LID head; Indic token
+cost (up to $\sim$45 tokens/s) overflows the 440-token budget for long chunks.
+
+\item \textbf{What would you do with one more day of GPU time?} Retrain with Indian-accented English (or a KL term to vanilla on
+English) on a reseeded second-epoch mix; that targets the largest remaining failure.
+
+\item \textbf{Why is CER the primary metric?} Long agglutinative words, spelling variants and script mixing make WER overly harsh;
+CER gives partial credit at the character level.
+\end{enumerate}

@@ -1,0 +1,131 @@
+\chapter{Balanced Sampling: Giving Every Language a Fair Share}
+\chaptermark{Balanced Sampling}
+\label{ch:balance}
+
+\section{Why the mix matters: the objective is a weighted sum}
+
+Let the training mix sample language $\ell$ with probability $\pi_\ell$, and let $R_\ell(\theta)$ be the expected per-token loss on
+language $\ell$. The expected mini-batch loss that SGD minimises is
+\[
+\E[\mathcal L_{\text{batch}}(\theta)]\approx\sum_{\ell\in\mathcal L}\pi_\ell\,R_\ell(\theta),
+\qquad
+\E[\nabla\mathcal L_{\text{batch}}]\approx\sum_\ell\pi_\ell\nabla R_\ell(\theta).
+\]
+(``$\approx$'' because the loss is averaged over tokens, and languages differ in tokens per utterance.)
+
+\begin{proposition}{The mix chooses the objective}{mixobj}
+Training on a mix with weights $\pi$ minimises the $\pi$-weighted risk $\sum_\ell\pi_\ell R_\ell$. If we report results as a plain
+average over languages, the matching training objective is $\pi_\ell=1/|\mathcal L|$.
+\end{proposition}
+\begin{proof}
+Immediate from linearity of expectation over the sampling of the language of each example.
+\end{proof}
+
+With natural proportions ($\pi_\ell\propto$ hours available), a language with 5\% of the data gets 5\% of the gradient. Its errors
+barely move the objective, so the model under-fits it. The price of equalising is repetition: a small corpus is seen several times
+per epoch, which risks over-fitting. The design below caps that repetition.
+
+\section{The two-stage algorithm}
+
+\begin{definition}{Two-stage deterministic balanced upsampling (Polyglot-Lion style)}{twostage}
+Constants: $T_h=90$ hours per language, replication cap $\rho=3$, share cap $\kappa=0.7$, code-switch fraction $f=0.1$.
+
+\textbf{Stage 1 (within a language).} Let $h_c$ be the hours of corpus $c$ for this language and $h_{\max}=\max_c h_c$. Set
+\[
+s_c=h_c\cdot\min\!\Big(\rho,\ \frac{h_{\max}}{h_c}\Big),\qquad \text{share}_c=\frac{s_c}{\sum_{c'}s_{c'}}.
+\]
+If some shares exceed $\kappa$, set those to $\kappa$ and rescale the others to fill $1-\kappa\cdot\#\text{capped}$ (repeat up to 10
+times; skipped if every corpus is over the cap).
+
+\textbf{Stage 2 (across languages).} Corpus $c$ contributes exactly $T_h\cdot\text{share}_c$ hours: $\lfloor\text{target}/h_c\rfloor$
+full copies plus a seeded random subset for the remainder (fewer than one copy means sub-sampling).
+
+\textbf{Code-switch pool.} MUCS gets $\frac{f}{1-f}\cdot|\mathcal L|\,T_h$ hours, split 60\% Hindi--English, 40\% Bengali--English.
+\end{definition}
+
+Stage 1 says: \emph{inside} a language, small corpora are pulled up toward the largest, but never replicated more than 3 times, and
+no single corpus may take more than 70\% of the language (so the language keeps several domains: read, spontaneous, news).
+
+\begin{proposition}{Total size of the mix}{mixsize}
+The mix has $|\mathcal L|T_h/(1-f)$ hours, of which a fraction $f$ is code-switched. With 7 languages, $T_h=90$, $f=0.1$:
+$630+70=\mathbf{700}$ hours.
+\end{proposition}
+\begin{proof}
+Monolingual: $|\mathcal L|T_h$. Code-switch: $\frac{f}{1-f}|\mathcal L|T_h$. Sum: $|\mathcal L|T_h\big(1+\frac{f}{1-f}\big)=
+\frac{|\mathcal L|T_h}{1-f}$. Its code-switch fraction is $\frac{f}{1-f}\big/\frac{1}{1-f}=f$.
+\end{proof}
+
+\begin{example}{Hindi}{mixhi}
+$h$: FLEURS 6.6, IndicVoices 55.5, Kathbath 14.1, Shrutilipi 21.0; $h_{\max}=55.5$.
+\begin{center}
+\begin{tabular}{lcccccc}
+\toprule
+Corpus & $h_c$ & $h_{\max}/h_c$ & $s_c$ & share & target (h) & replication\\
+\midrule
+FLEURS & 6.6 & 8.41 & 19.8 & 0.114 & 10.3 & 1.56$\times$\\
+IndicVoices & 55.5 & 1.00 & 55.5 & 0.321 & 28.9 & 0.52$\times$\\
+Kathbath & 14.1 & 3.94 & 42.3 & 0.244 & 22.0 & 1.56$\times$\\
+Shrutilipi & 21.0 & 2.64 & 55.5 & 0.321 & 28.9 & 1.37$\times$\\
+\midrule
+Sum & 97.2 & & 173.1 & 1.000 & 90.0 & \\
+\bottomrule
+\end{tabular}
+\end{center}
+No share exceeds 0.7. IndicVoices is \emph{sub-sampled} to about half per epoch, while FLEURS and Kathbath are repeated. (The real
+run uses hours after the 440-token filter, so its numbers differ slightly.)
+\end{example}
+
+\begin{example}{English: the share cap in action}{mixen}
+$h$: FLEURS 7.4, LibriSpeech 100.6. Stage 1: $s=(3\cdot7.4,\ 100.6)=(22.2,\ 100.6)$, shares $(0.181,\ 0.819)$. LibriSpeech exceeds
+$\kappa=0.7$, so it is capped at 0.7 and FLEURS gets $0.3$. Targets: FLEURS $27$ h, i.e.\ \textbf{3.65$\times$} replication
+(the share cap overrides the replication cap; the log notes ``English FLEURS replicated 3.6$\times$''), LibriSpeech 63 h.
+\end{example}
+
+\begin{exercise}{Odia FLEURS}{mixor}
+Odia: FLEURS 3.4, IndicVoices 54.7, Kathbath 13.4, Shrutilipi 24.7 hours. Find FLEURS's target hours.\par
+\textit{Solution.} $h_{\max}=54.7$. $s$: FLEURS $3\cdot3.4=10.2$; IndicVoices $54.7$; Kathbath $3\cdot13.4=40.2$; Shrutilipi
+$24.7\cdot\min(3,2.21)=54.7$. Sum $159.8$. FLEURS share $10.2/159.8=0.064$, target $5.7$ h ($1.69\times$).
+\end{exercise}
+
+\paragraph{The result.} One deterministic file, \file{splits/train_mix_epoch0.jsonl}: 349{,}592 utterance references (no audio is
+copied), exactly 90 h per language plus 70 h of code-switch (42 h hi--en, 28 h bn--en). Language tags are kept, because they are
+needed as the \tok{$\ell$} target and the LID-CTC target. (Polyglot-Lion drops tags so the model learns LID implicitly; we need an
+explicit LID output, so we keep them.)
+
+\begin{intuition}[: deterministic vs temperature sampling]
+The classical alternative samples language $\ell$ with $\pi_\ell\propto n_\ell^{1/\tau}$ (temperature $\tau$). It works but $\tau$
+is a sensitive knob and the realised hours per language are random. The two-stage method gives exactly equal hours by construction.
+\end{intuition}
+
+\section{Evidence: experiment E3}
+
+Whisper-small, LoRA, Hindi/Telugu/Assamese with a deliberately skewed pool (hi 97 h, te 26 h, as 5 h), same number of steps. Dev CER:
+
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+Set & unbalanced & balanced & change\\
+\midrule
+FLEURS as & 0.242 & \textbf{0.182} & $-0.060$\\
+IndicVoices as & 0.342 & \textbf{0.278} & $-0.064$\\
+FLEURS te & 0.129 & 0.119 & $-0.010$\\
+FLEURS hi & \textbf{0.096} & 0.111 & $+0.015$\\
+IndicVoices hi & \textbf{0.097} & 0.113 & $+0.016$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Exactly what Proposition~\ref{prop:mixobj} predicts: the scarcest language (Assamese) gains a lot, the richest (Hindi) loses a
+little. Decision: balance.
+
+\begin{incode}
+\file{balanced_mix.py}: \texttt{corpus\_shares} (Stage 1 with the cap loop), \texttt{take} (full copies + seeded remainder),
+\texttt{build} (Stage 2 + code-switch). Run \texttt{python balanced\_mix.py 1} to get a reshuffled second epoch. Bug 23: a language
+with a single corpus would have been capped at 70\% of $T_h$; fixed by skipping the cap when every corpus is over it.
+\end{incode}
+
+\begin{vivatip}
+Note what one epoch of this mix means for IndicVoices: it is sub-sampled to 0.5--0.7$\times$ per epoch. Stage 2 trained exactly one
+epoch of mix 0, so part of the IndicVoices training data was never seen. A second epoch should use a reseeded mix (seed 1), not
+mix 0 again.
+\end{vivatip}

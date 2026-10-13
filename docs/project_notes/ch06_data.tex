@@ -1,0 +1,133 @@
+\chapter{Data: Corpora, Pipeline, and Honest Train/Test Splits}
+\chaptermark{Data and Splits}
+\label{ch:data}
+
+\section{The corpora}
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{lYYl}
+\toprule
+Corpus & Languages & Character & Role\\
+\midrule
+IndicVoices (AI4Bharat) & as, bn, hi, mr, or, te & spontaneous, many speakers, the hardest & train / dev / test\\
+Kathbath (AI4Bharat) & bn, hi, mr, or, te (no as) & read sentences, phone recordings & train / dev / test\\
+Shrutilipi & as, bn, hi, mr, or, te & All India Radio news, read & train only\\
+FLEURS (Google) & all 7 & read Wikipedia sentences & train / dev / test\\
+LibriSpeech & en & read audiobooks (clean-100, dev/test-clean) & train / dev / test\\
+MUCS 2021 & hi--en, bn--en & code-switched lectures & train / dev / test\\
+Svarah & en (Indian accent) & 117 speakers, 65 districts & test only\\
+Lahaja & hi (many accents) & multi-accent Hindi & test only\\
+MUSAN (noise, music), RIRs & -- & augmentation and robustness tests & 80\% train / 20\% eval\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Training hours per language after splitting (from \file{reports/splits.txt}):
+
+\begin{center}
+\small
+\begin{tabular}{lrrrrrr}
+\toprule
+ & FLEURS & IndicVoices & Kathbath & Shrutilipi & LibriSpeech & MUCS (code-switch)\\
+\midrule
+hi & 6.6 & 55.5 & 14.1 & 21.0 & -- & 77.6\\
+mr & 11.8 & 48.2 & 13.6 & 22.2 & -- & --\\
+bn & 10.6 & 44.6 & 13.3 & 21.0 & -- & 40.0\\
+as & 10.4 & 54.0 & -- & 23.9 & -- & --\\
+or & 3.4 & 54.7 & 13.4 & 24.7 & -- & --\\
+te & 7.9 & 49.4 & 14.6 & 21.9 & -- & --\\
+en & 7.4 & -- & -- & -- & 100.6 & --\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+These are the \emph{downloaded subsets} (some shards of each corpus), chosen so that every language has roughly 85--110 hours.
+
+\section{The pipeline}
+
+\begin{enumerate}
+\item \file{audit_data.py}: reads only metadata and writes hours, utterances and speakers per corpus, language and split to
+\file{reports/data_audit.csv}.
+\item \file{build_manifests.py}: decodes every corpus to 16 kHz mono FLAC and writes one JSON line per utterance:
+\texttt{id, corpus, lang, split, path, dur, text, text\_norm, speaker, cs}. It drops clips longer than 30 s (they do not fit
+Whisper's window), shorter than 0.3 s, or with an empty normalised text. MUCS long recordings are cut using its \texttt{segments}
+file. Result: 467{,}515 utterances.
+\item \file{make_splits.py}: assigns each utterance to train, dev or test (next section).
+\item \file{prep_tokens.py}: adds \texttt{ntok}, the Whisper token count of \texttt{text\_norm}.
+\item \file{balanced_mix.py}: builds the 700-hour training mix (Chapter~\ref{ch:balance}).
+\end{enumerate}
+
+\section{Why the split must be speaker-disjoint}
+
+\begin{definition}{Generalisation error}{generr}
+Let $\mathcal D$ be the distribution of (audio, transcript) pairs a deployed system will meet, and $\ell$ a loss. The quantity we
+want is $R(h)=\E_{(\vx,\vy)\sim\mathcal D}[\ell(h(\vx),\vy)]$. A test set estimates $R(h)$ by an average
+$\hat R(h)=\frac1K\sum_{i}\ell(h(\vx_i),\vy_i)$, which is unbiased only if the test pairs are drawn from $\mathcal D$
+\emph{independently of the training data}.
+\end{definition}
+
+A real user is (almost always) a \emph{new speaker}. If test speakers also appear in training, the model may have memorised their
+voice, accent and microphone, and $\hat R$ underestimates $R$. The test pairs are then not independent of the training sample.
+
+\begin{example}{The official splits were not speaker-disjoint}{spk}
+\file{make_splits.py} checks the official IndicVoices and Kathbath \texttt{train} vs \texttt{valid} splits:
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+Corpus & train speakers & valid speakers & shared\\
+\midrule
+IndicVoices & 4{,}915 & 2{,}702 & \textbf{1{,}217}\\
+Kathbath & 170 & 91 & \textbf{40}\\
+\bottomrule
+\end{tabular}
+\end{center}
+Fix: every \texttt{valid} utterance whose speaker occurs in \texttt{train} is moved to train. Dev and test are drawn only from
+valid-only speakers (30\% of those speakers to dev, the rest to test). The script then re-checks: train$\cap$dev $=$
+train$\cap$test $=$ dev$\cap$test $=\emptyset$ for IndicVoices, Kathbath and MUCS.
+\end{example}
+
+\paragraph{Role assignment per corpus.}
+\begin{itemize}
+\item IndicVoices, Kathbath: as above.
+\item Shrutilipi: train only (no speaker ids exist, so a speaker-disjoint test split is impossible).
+\item FLEURS, LibriSpeech: their official train/dev/test (already speaker-disjoint by construction).
+\item MUCS: official test is test; 5\% of training \emph{recordings} go to dev (recording ids act as speakers).
+\item Svarah, Lahaja: test only.
+\end{itemize}
+
+\section{Text leakage}
+
+Many corpora reuse sentences: different speakers read the same prompt. If a test sentence's text is in training, the decoder may
+recall it as a language model rather than recognise it.
+
+\begin{definition}{Leakage removal}{leak}
+For each language $\ell$, let $\mathcal T_\ell$ be the set of normalised texts of all dev and test utterances of $\ell$. Every training
+utterance of $\ell$ whose normalised text is in $\mathcal T_\ell$ is removed (\texttt{role = dropped\_leak}).
+\end{definition}
+
+Removed: IndicVoices hi 5{,}005, mr 2{,}862, or 2{,}667, te 2{,}042, bn 2{,}036, as 1{,}357; MUCS hi 4{,}964, bn 2{,}538; a handful in
+LibriSpeech and Shrutilipi. (MUCS lectures repeat phrases often, hence the large count.)
+
+\begin{center}
+\fbox{\parbox{0.8\linewidth}{\centering Final split: \textbf{384{,}027 train} / \textbf{14{,}883 dev} / \textbf{45{,}104 test} utterances.}}
+\end{center}
+
+\section{Unique ids}
+
+Bug 8: 19{,}361 ids were not unique (FLEURS sentence ids are shared by several speakers; some shards had identical file names in
+every language). Paths were always unique, so no audio was lost, but ids are used to pair hypotheses across systems in the
+statistics of Chapter~\ref{ch:eval}, so they were made unique and the splits regenerated.
+
+\begin{exercise}{Why is Shrutilipi train-only, and why does that not bias the results?}{shru}
+\textit{Solution.} It has no speaker labels, so we cannot guarantee that a Shrutilipi test speaker is unseen. Using it only for
+training is safe: the speakers of the other corpora's test sets are a different population (AI4Bharat recruits vs radio
+newsreaders), and none of our test sets is drawn from Shrutilipi.
+\end{exercise}
+
+\begin{vivatip}
+If an examiner asks ``how do you know your numbers are not inflated?'', the three checks are: speaker-disjoint dev/test (re-verified
+with 0 overlap), text-leakage removal, and test sets never used for any decision (E1--E4 used the dev split only; the test split was
+used once, for the final model and baselines). The one exception is calibration of the LID rule on Svarah, which used a
+\emph{speaker-disjoint} Svarah subset (Chapter~\ref{ch:svarah}).
+\end{vivatip}

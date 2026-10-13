@@ -1,0 +1,456 @@
+{
+ "fleurs/as": {
+  "n": 100,
+  "pred_norm": {
+   "wer": 1.0632090761750406,
+   "cer": 0.9921497584541062,
+   "n": 100
+  },
+  "lid_acc": 0.0,
+  "lid_conf": {
+   "Hungarian": 60,
+   "Malay": 19,
+   "Persian": 13,
+   "hi": 6,
+   "Filipino": 2
+  }
+ },
+ "fleurs/bn": {
+  "n": 100,
+  "pred_norm": {
+   "wer": 1.090358126721763,
+   "cer": 0.9944871366521885,
+   "n": 100
+  },
+  "lid_acc": 0.0,
+  "lid_conf": {
+   "hi": 35,
+   "Hungarian": 65
+  }
+ },
+ "fleurs/en": {
+  "n": 100,
+  "pred_norm": {
+   "wer": 0.06533729316928298,
+   "cer": 0.03602367889113486,
+   "n": 100
+  },
+  "lid_acc": 1.0,
+  "lid_conf": {
+   "en": 100
+  },
+  "oracle_norm": {
+   "wer": 0.06533729316928298,
+   "cer": 0.03602367889113486,
+   "n": 100
+  },
+  "oracle_raw": {
+   "wer": 0.11525565800502934,
+   "cer": 0.03369851615587297,
+   "n": 100
+  }
+ },
+ "fleurs/hi": {
+  "n": 100,
+  "pred_norm": {
+   "wer": 0.22448077772867875,
+   "cer": 0.10647126335305024,
+   "n": 100
+  },
+  "lid_acc": 1.0,
+  "lid_conf": {
+   "hi": 100
+  },
+  "oracle_norm": {
+   "wer": 0.22536456031816174,
+   "cer": 0.10682440187163415,
+   "n": 100
+  },
+  "oracle_raw": {
+   "wer": 0.26643447975620377,
+   "cer": 0.10289389067524116,
+   "n": 100
+  }
+ },
+ "fleurs/mr": {
+  "n": 100,
+  "pred_norm": {
+   "wer": 0.9365750528541226,
+   "cer": 0.3826598666143586,
+   "n": 100
+  },
+  "lid_acc": 0.0,
+  "lid_conf": {
+   "hi": 91,
+   "Hungarian": 7,
+   "Malay": 2
+  }
+ },
+ "fleurs/or": {
+  "n": 100,
+  "pred_norm": {
+   "wer": 1.216516675489677,
+   "cer": 0.9842919662394498,
+   "n": 100
+  },
+  "lid_acc": 0.0,
+  "lid_conf": {
+   "hi": 76,
+   "Malay": 2,
+   "Hungarian": 19,
+   "Filipino": 1,
+   "Korean": 2
+  }
+ },
+ "fleurs/te": {
+  "n": 100,
+  "pred_norm": {
+   "wer": 1.2496757457846952,
+   "cer": 1.013704533701086,
+   "n": 100
+  },
+  "lid_acc": 0.0,
+  "lid_conf": {
+   "hi": 45,
+   "Hungarian": 35,
+   "Malay": 19,
+   "none": 1
+  }
+ },
+ "indicvoices/as": {
+  "n": 100,
+  "pred_norm": {
+   "wer": 1.0792592592592594,
+   "cer": 0.9386037527593819,
+   "n": 100
+  },
+  "lid_acc": 0.0,
+  "lid_conf": {
+   "Tagalog": 1,
+   "Malay": 49,
+   "hi": 21,
+   "Chinese": 15,
+   "Thai": 4,
+   "en": 2,
+   "none": 1,
+   "Korean": 1,
+   "French": 1,
+   "Vietnamese": 1,
+   "Japanese": 1,
+   "Arabic": 1,
+   "Hungarian": 1,
+   "Portuguese": 1
+  }
+ },
+ "indicvoices/bn": {
+  "n": 100,
+  "pred_norm": {
+   "wer": 1.1410934744268078,
+   "cer": 0.928654970760234,
+   "n": 100
+  },
+  "lid_acc": 0.0,
+  "lid_conf": {
+   "hi": 52,
+   "Chinese": 29,
+   "Korean": 2,
+   "Indonesian": 3,
+   "Japanese": 2,
+   "Malay": 5,
+   "Hungarian": 2,
+   "Portuguese": 2,
+   "en": 1,
+   "Arabic": 1,
+   "Thai": 1
+  }
+ },
+ "indicvoices/hi": {
+  "n": 100,
+  "pred_norm": {
+   "wer": 0.30138797091870456,
+   "cer": 0.18306463763748682,
+   "n": 100
+  },
+  "lid_acc": 0.65,
+  "lid_conf": {
+   "hi": 65,
+   "Portuguese": 3,
+   "Chinese": 20,
+   "Malay": 4,
+   "Arabic": 2,
+   "Thai": 3,
+   "Hungarian": 1,
+   "Indonesian": 2
+  },
+  "oracle_norm": {
+   "wer": 0.2729676140118969,
+   "cer": 0.1437396414042489,
+   "n": 100
+  },
+  "oracle_raw": {
+   "wer": 0.28063241106719367,
+   "cer": 0.1512942576614103,
+   "n": 100
+  }
+ },
+ "indicvoices/mr": {
+  "n": 100,
+  "pred_norm": {
+   "wer": 0.9704,
+   "cer": 0.53554846198491,
+   "n": 100
+  },
+  "lid_acc": 0.0,
+  "lid_conf": {
+   "Arabic": 8,
+   "hi": 63,
+   "Chinese": 13,
+   "Portuguese": 3,
+   "en": 1,
+   "Malay": 7,
+   "Cantonese": 1,
+   "Hungarian": 3,
+   "Indonesian": 1
+  }
+ },
+ "indicvoices/or": {
+  "n": 100,
+  "pred_norm": {
+   "wer": 1.1727367325702394,
+   "cer": 0.9697758206565252,
+   "n": 100
+  },
+  "lid_acc": 0.0,
+  "lid_conf": {
+   "hi": 40,
+   "Malay": 18,
+   "Chinese": 32,
+   "en": 2,
+   "Thai": 1,
+   "Tagalog": 1,
+   "Portuguese": 3,
+   "Indonesian": 2,
+   "Arabic": 1
+  }
+ },
+ "indicvoices/te": {
+  "n": 100,
+  "pred_norm": {
+   "wer": 1.2596063730084348,
+   "cer": 0.9437286352879306,
+   "n": 100
+  },
+  "lid_acc": 0.0,
+  "lid_conf": {
+   "Chinese": 18,
+   "Indonesian": 2,
+   "Cantonese": 1,
+   "Thai": 3,
+   "Malay": 16,
+   "hi": 47,
+   "Hungarian": 4,
+   "Korean": 2,
+   "en": 3,
+   "Portuguese": 2,
+   "Italian": 1,
+   "Arabic": 1
+  }
+ },
+ "kathbath/bn": {
+  "n": 100,
+  "pred_norm": {
+   "wer": 1.1063244729605866,
+   "cer": 0.9393099625883331,
+   "n": 100
+  },
+  "lid_acc": 0.0,
+  "lid_conf": {
+   "hi": 86,
+   "Persian": 1,
+   "Hungarian": 13
+  }
+ },
+ "kathbath/hi": {
+  "n": 100,
+  "pred_norm": {
+   "wer": 0.19690455717970765,
+   "cer": 0.07924068268895855,
+   "n": 100
+  },
+  "lid_acc": 1.0,
+  "lid_conf": {
+   "hi": 100
+  },
+  "oracle_norm": {
+   "wer": 0.18916595012897677,
+   "cer": 0.07662835249042145,
+   "n": 100
+  },
+  "oracle_raw": {
+   "wer": 0.21324161650902837,
+   "cer": 0.08237547892720307,
+   "n": 100
+  }
+ },
+ "kathbath/mr": {
+  "n": 100,
+  "pred_norm": {
+   "wer": 0.9541284403669725,
+   "cer": 0.3389654276059267,
+   "n": 100
+  },
+  "lid_acc": 0.0,
+  "lid_conf": {
+   "hi": 96,
+   "Persian": 1,
+   "Hungarian": 2,
+   "Malay": 1
+  }
+ },
+ "kathbath/or": {
+  "n": 100,
+  "pred_norm": {
+   "wer": 1.2633053221288515,
+   "cer": 0.9754764573991032,
+   "n": 100
+  },
+  "lid_acc": 0.0,
+  "lid_conf": {
+   "hi": 92,
+   "Hungarian": 6,
+   "Polish": 1,
+   "Persian": 1
+  }
+ },
+ "kathbath/te": {
+  "n": 100,
+  "pred_norm": {
+   "wer": 1.284786641929499,
+   "cer": 0.9798712697483909,
+   "n": 100
+  },
+  "lid_acc": 0.0,
+  "lid_conf": {
+   "Malay": 2,
+   "hi": 75,
+   "Hungarian": 23
+  }
+ },
+ "lahaja/hi": {
+  "n": 100,
+  "pred_norm": {
+   "wer": 0.2463935372186959,
+   "cer": 0.12733659515744575,
+   "n": 100
+  },
+  "lid_acc": 0.89,
+  "lid_conf": {
+   "hi": 89,
+   "Malay": 3,
+   "Arabic": 4,
+   "Cantonese": 2,
+   "Hungarian": 1,
+   "Italian": 1
+  },
+  "oracle_norm": {
+   "wer": 0.23889209463358338,
+   "cer": 0.11842930623510224,
+   "n": 100
+  },
+  "oracle_raw": {
+   "wer": 0.2515868436237738,
+   "cer": 0.12152121899005162,
+   "n": 100
+  }
+ },
+ "librispeech/en": {
+  "n": 100,
+  "pred_norm": {
+   "wer": 0.029866666666666666,
+   "cer": 0.008466035073573876,
+   "n": 100
+  },
+  "lid_acc": 1.0,
+  "lid_conf": {
+   "en": 100
+  },
+  "oracle_norm": {
+   "wer": 0.029866666666666666,
+   "cer": 0.008466035073573876,
+   "n": 100
+  },
+  "oracle_raw": {
+   "wer": 0.9888,
+   "cer": 0.8291675065510986,
+   "n": 100
+  }
+ },
+ "mucs/bn": {
+  "n": 100,
+  "pred_norm": {
+   "wer": 1.103329506314581,
+   "cer": 0.8817224880382775,
+   "n": 100
+  },
+  "lid_acc": 0.0,
+  "lid_conf": {
+   "hi": 69,
+   "Hungarian": 16,
+   "en": 6,
+   "Malay": 7,
+   "Korean": 2
+  }
+ },
+ "mucs/hi": {
+  "n": 100,
+  "pred_norm": {
+   "wer": 0.4938488576449912,
+   "cer": 0.42625775327360443,
+   "n": 100
+  },
+  "lid_acc": 0.9,
+  "lid_conf": {
+   "en": 9,
+   "hi": 90,
+   "Korean": 1
+  },
+  "oracle_norm": {
+   "wer": 0.4876977152899824,
+   "cer": 0.4166092350103377,
+   "n": 100
+  },
+  "oracle_raw": {
+   "wer": 0.5218531468531469,
+   "cer": 0.4309012875536481,
+   "n": 100
+  }
+ },
+ "svarah/en": {
+  "n": 100,
+  "pred_norm": {
+   "wer": 0.19940769990128332,
+   "cer": 0.13878756296682299,
+   "n": 100
+  },
+  "lid_acc": 0.89,
+  "lid_conf": {
+   "en": 89,
+   "Korean": 1,
+   "Chinese": 4,
+   "Vietnamese": 1,
+   "Indonesian": 1,
+   "French": 1,
+   "hi": 3
+  },
+  "oracle_norm": {
+   "wer": 0.19545903257650543,
+   "cer": 0.13409762028834463,
+   "n": 100
+  },
+  "oracle_raw": {
+   "wer": 0.3475247524752475,
+   "cer": 0.1676677535610091,
+   "n": 100
+  }
+ }
+}

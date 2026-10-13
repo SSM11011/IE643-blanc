@@ -1,0 +1,94 @@
+\chapter*{How to Read These Notes \& Notation}
+\addcontentsline{toc}{chapter}{How to Read These Notes \& Notation}
+\markboth{How to read these notes}{}
+
+\section*{The project in one page}
+
+The whole project is one continuous story. If you keep this storyline in your head, every chapter has an obvious place.
+
+\begin{enumerate}[leftmargin=*]
+\item \textbf{The task (Ch.~1).} Given a short audio clip of someone speaking Hindi, English, Telugu, Assamese, Odia, Bengali or
+Marathi (or mixing Hindi/Bengali with English), output (a) the words, in the right script, and (b) which language it was, with a
+confidence. We want \emph{one} neural network to do both, not a language detector followed by seven recognisers.
+\item \textbf{Sound as numbers (Ch.~2).} A microphone signal is sampled 16{,}000 times a second. We cut it into 25~ms frames,
+take a Fourier transform of each, pool the energies into 128 ``mel'' bands that follow human pitch perception, and take logarithms.
+A 30-second clip becomes a $128\times 3000$ image, the \emph{log-mel spectrogram}.
+\item \textbf{Scoring (Ch.~3).} We count the minimum number of character insertions, deletions and substitutions that turn the
+output into the reference (edit distance). Dividing by the reference length gives the character error rate (CER). Language
+identification (LID) is scored by accuracy and a confusion matrix.
+\item \textbf{The model family (Ch.~4--5).} Whisper is an encoder--decoder Transformer trained by OpenAI on 680{,}000 hours of
+audio. The encoder turns the spectrogram into 1{,}500 vectors (one per 20~ms). The decoder writes text one token at a time, and its
+\emph{first} token is the language. Out of the box it is good at English and Hindi but nearly useless at Telugu, Assamese,
+Bengali and Marathi, and it has no Odia token at all.
+\item \textbf{Data (Ch.~6--7).} We collect about 700 hours from nine public corpora, make sure no speaker appears in both training
+and test data, and \emph{rebalance} the mix so that every language gets exactly 90 hours per epoch (plus 70 hours of code-switched
+speech).
+\item \textbf{Cheap fine-tuning (Ch.~8).} Instead of updating all 809 million weights, LoRA adds small low-rank correction matrices
+$\Delta W = \tfrac{\alpha}{r}BA$ to each layer and trains only those (20.5 million numbers).
+\item \textbf{A new language token (Ch.~9).} We add \tok{or} for Odia to the vocabulary, initialise it from Bengali, and make it
+the only row of the embedding matrix that can change.
+\item \textbf{A second LID opinion (Ch.~10).} A tiny linear layer on top of the encoder is trained with the CTC loss to shout the
+language name somewhere in the clip. This gives the encoder a direct LID signal and gives us a second LID prediction.
+\item \textbf{Robustness (Ch.~11).} Noise, reverberation, speed changes and spectrogram masking at training time; 5\% of training
+clips are pure noise with an \emph{empty} transcript, which teaches the model to stay silent instead of hallucinating.
+\item \textbf{Training and evaluation (Ch.~12--13).} AdamW, warm-up then linear decay, 11{,}000 steps of 32 clips, 16.6 hours on
+one GPU. Evaluation on 23 held-out test sets of 100 utterances, with bootstrap confidence intervals and paired tests.
+\item \textbf{Results (Ch.~14).} Mean CER falls from 0.696 (vanilla) to 0.113 (true language given) and 0.126 (language predicted
+by the model). Hallucination on noise falls from about 100\% to at most 1\%. We beat the strongest Indic system (IndicConformer)
+on code-switched speech but not on its own in-domain monolingual data.
+\item \textbf{The one big failure, and a partial repair (Ch.~15).} Indian-accented English got much worse after fine-tuning. Two
+decoding-time fixes with no retraining (forbid non-ASCII tokens for English; a two-parameter calibrated LID rule) recover part of it.
+\item \textbf{Demo, lessons and limits (Ch.~16--17).} A Gradio demo with voice-activity-based chunking, and the bugs that would
+have changed the conclusions had they not been caught.
+\end{enumerate}
+
+\section*{Notation used throughout}
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.33\linewidth}>{\raggedright\arraybackslash}p{0.6\linewidth}}
+\toprule
+Symbol & Meaning\\
+\midrule
+$\mathcal L$ & the 7 languages $\{\text{hi},\text{en},\text{te},\text{as},\text{or},\text{bn},\text{mr}\}$ (ISO 639-1 codes)\\
+$f_s=16000$ & sampling rate (samples per second)\\
+$x[n]$ & digital waveform, $n=0,1,\dots$\\
+$X[m,k]$ & short-time Fourier transform: frame $m$, frequency bin $k$\\
+$\bm F\in\R^{128\times 3000}$ & log-mel spectrogram of one 30-s window (Whisper large-v3/turbo)\\
+$T$ & number of valid encoder frames of a clip, $T=\min(1500,\lfloor 50\cdot\text{dur}\rfloor+1)$\\
+$\vh_1,\dots,\vh_{1500}\in\R^{d}$ & encoder outputs; $d=1280$ (turbo), $768$ (small)\\
+$\vy=(y_1,\dots,y_U)$ & target token sequence; $\vy_{<t}=(y_1,\dots,y_{t-1})$\\
+$V$ & vocabulary size; $51866$ for turbo, $+1$ after adding \tok{or}\\
+$\bm E\in\R^{V\times d}$ & token embedding matrix (tied with the output projection)\\
+$\vz_t\in\R^{V}$ & decoder logits at step $t$; $p_\theta(\cdot\mid \vy_{<t},\vx)=\softmax(\vz_t)$\\
+$\theta$ & all model parameters\\
+$W_0\in\R^{d_{\text{out}}\times d_{\text{in}}}$ & a frozen pretrained weight matrix\\
+$A\in\R^{r\times d_{\text{in}}},\ B\in\R^{d_{\text{out}}\times r}$ & LoRA factors; $r=32$, $\alpha=64$\\
+$\blank$ & CTC blank symbol\\
+$\mathcal B$ & CTC collapse map (merge repeats, delete blanks)\\
+$p_t(c)$ & LID-head posterior of class $c\in\{\blank\}\cup\mathcal L$ at encoder frame $t$\\
+$\lambda$ & weight of the LID-CTC loss ($0.3$)\\
+$d(\bm r,\bm h)$ & Levenshtein (edit) distance between reference $\bm r$ and hypothesis $\bm h$\\
+$S,D,I,N$ & substitutions, deletions, insertions, reference length\\
+$\mathrm{SNR}$ & signal-to-noise ratio in dB, $10\log_{10}(P_{\text{signal}}/P_{\text{noise}})$\\
+$h_c$ & hours of training audio in corpus $c$; $T_h=90$ hours per language per epoch\\
+$\eta_s$ & learning rate at step $s$\\
+$B_{\text{boot}}=2000$ & number of bootstrap resamples\\
+$b,\ w$ & English bias and head weight of the calibrated LID rule\\
+\bottomrule
+\end{longtable}
+
+\begin{vivatip}
+Three words are used loosely in speech papers, so fix them now. An \emph{utterance} is one recorded sentence or phrase (one row
+of a manifest). A \emph{corpus} is a dataset (FLEURS, IndicVoices, \dots). A \emph{test set} in these notes is one
+(corpus, language) pair, for example \texttt{indicvoices/as}; there are 23 of them.
+\end{vivatip}
+
+\section*{Where things live}
+\begin{tabularx}{\linewidth}{lY}
+\toprule
+\file{src/} & all code (pipeline, training, evaluation, demo); map in Appendix~\ref{app:repro}\\
+\file{data/processed/} & 16 kHz FLAC audio, JSONL manifests, \file{splits/train.jsonl}, \file{dev.jsonl}, \file{test.jsonl}\\
+\file{runs/s2_turbo/} & final model: \file{adapter/} (LoRA + Odia row), \file{lid_head.pt}, \file{lid_rule.json}\\
+\file{reports/} & every number in these notes: \file{experiments.md}, \file{analysis.md}, \file{test_*.json}, \dots\\
+\file{docs/PROJECT_LOG.md} & chronological log of decisions and the 26 bugs found\\
+\bottomrule
+\end{tabularx}

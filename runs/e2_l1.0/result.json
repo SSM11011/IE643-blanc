@@ -1,0 +1,97 @@
+{
+ "args": {
+  "model": "/home/shibam/IE643/models/whisper-small",
+  "name": "e2_l1.0",
+  "mode": "lora",
+  "langs": "hi,te,as",
+  "cs": false,
+  "manifest": "/home/shibam/IE643/data/processed/splits/train_mix_epoch0.jsonl",
+  "steps": 1200,
+  "bs": 32,
+  "lr": null,
+  "warmup": 0.1,
+  "r": 32,
+  "alpha": 64,
+  "workers": 12,
+  "eval_n": 64,
+  "eval_start": false,
+  "freeze_enc_frac": 0.0,
+  "seed": 0,
+  "no_compile": false,
+  "lid_ctc": 1.0,
+  "lid_detach": false,
+  "aug": false,
+  "nonspeech": 0.0
+ },
+ "lr": 0.0005,
+ "trainable_M": 12.979204,
+ "train_time_s": 2586.9537391662598,
+ "utt_per_s": 14.843713431453022,
+ "final_loss": 0.17905123203992843,
+ "eval_final": {
+  "fleurs/as": {
+   "cer": 0.17833682739343118,
+   "wer": 0.4351279788172992,
+   "lid_acc": 1.0,
+   "lid_acc_head": 1.0,
+   "loop_rate": 0.046875,
+   "n": 64
+  },
+  "fleurs/hi": {
+   "cer": 0.09567617295308188,
+   "wer": 0.26064178127046495,
+   "lid_acc": 0.984375,
+   "lid_acc_head": 0.96875,
+   "loop_rate": 0.0,
+   "n": 64
+  },
+  "fleurs/te": {
+   "cer": 0.11366006256517205,
+   "wer": 0.4103869653767821,
+   "lid_acc": 1.0,
+   "lid_acc_head": 1.0,
+   "loop_rate": 0.0,
+   "n": 64
+  },
+  "indicvoices/as": {
+   "cer": 0.35787117632429744,
+   "wer": 0.7723785166240409,
+   "lid_acc": 0.828125,
+   "lid_acc_head": 0.78125,
+   "loop_rate": 0.046875,
+   "n": 64
+  },
+  "indicvoices/hi": {
+   "cer": 0.12874376039933444,
+   "wer": 0.3089731729879741,
+   "lid_acc": 0.84375,
+   "lid_acc_head": 0.90625,
+   "loop_rate": 0.0,
+   "n": 64
+  },
+  "indicvoices/te": {
+   "cer": 0.213353306227263,
+   "wer": 0.5289747399702823,
+   "lid_acc": 0.96875,
+   "lid_acc_head": 0.953125,
+   "loop_rate": 0.046875,
+   "n": 64
+  },
+  "kathbath/hi": {
+   "cer": 0.13139801375095492,
+   "wer": 0.37435897435897436,
+   "lid_acc": 1.0,
+   "lid_acc_head": 0.984375,
+   "loop_rate": 0.0,
+   "n": 64
+  },
+  "kathbath/te": {
+   "cer": 0.12454545454545454,
+   "wer": 0.5410071942446043,
+   "lid_acc": 1.0,
+   "lid_acc_head": 1.0,
+   "loop_rate": 0.0,
+   "n": 64
+  }
+ }
+}

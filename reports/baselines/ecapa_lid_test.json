@@ -1,0 +1,530 @@
+{
+ "fleurs/as": {
+  "n": 100,
+  "open_conf": {
+   "as": 100
+  },
+  "closed_conf": {
+   "as": 100
+  },
+  "open_acc": 1.0,
+  "closed_acc": 1.0
+ },
+ "fleurs/bn": {
+  "n": 100,
+  "open_conf": {
+   "bn": 100
+  },
+  "closed_conf": {
+   "bn": 100
+  },
+  "open_acc": 1.0,
+  "closed_acc": 1.0
+ },
+ "fleurs/en": {
+  "n": 100,
+  "open_conf": {
+   "en": 100
+  },
+  "closed_conf": {
+   "en": 100
+  },
+  "open_acc": 1.0,
+  "closed_acc": 1.0
+ },
+ "fleurs/hi": {
+  "n": 100,
+  "open_conf": {
+   "hi": 88,
+   "gu": 2,
+   "ur": 9,
+   "pl": 1
+  },
+  "closed_conf": {
+   "hi": 99,
+   "as": 1
+  },
+  "open_acc": 0.88,
+  "closed_acc": 0.99
+ },
+ "fleurs/mr": {
+  "n": 100,
+  "open_conf": {
+   "mr": 100
+  },
+  "closed_conf": {
+   "mr": 100
+  },
+  "open_acc": 1.0,
+  "closed_acc": 1.0
+ },
+ "fleurs/or": {
+  "n": 100,
+  "open_conf": {
+   "as": 54,
+   "bn": 10,
+   "gu": 8,
+   "mr": 18,
+   "ne": 7,
+   "te": 2,
+   "ml": 1
+  },
+  "closed_conf": {
+   "as": 63,
+   "bn": 11,
+   "mr": 23,
+   "te": 2,
+   "hi": 1
+  }
+ },
+ "fleurs/te": {
+  "n": 100,
+  "open_conf": {
+   "te": 99,
+   "mn": 1
+  },
+  "closed_conf": {
+   "te": 99,
+   "bn": 1
+  },
+  "open_acc": 0.99,
+  "closed_acc": 0.99
+ },
+ "indicvoices/as": {
+  "n": 100,
+  "open_conf": {
+   "as": 78,
+   "ka": 1,
+   "ha": 2,
+   "my": 1,
+   "fo": 1,
+   "te": 3,
+   "la": 1,
+   "fa": 1,
+   "fr": 1,
+   "ps": 1,
+   "bn": 1,
+   "mg": 1,
+   "pt": 1,
+   "mk": 3,
+   "uz": 1,
+   "tl": 1,
+   "br": 1,
+   "ht": 1
+  },
+  "closed_conf": {
+   "as": 84,
+   "te": 8,
+   "bn": 5,
+   "hi": 2,
+   "en": 1
+  },
+  "open_acc": 0.78,
+  "closed_acc": 0.84
+ },
+ "indicvoices/bn": {
+  "n": 100,
+  "open_conf": {
+   "bn": 54,
+   "mk": 3,
+   "hi": 3,
+   "as": 6,
+   "ha": 4,
+   "gu": 1,
+   "te": 7,
+   "kk": 1,
+   "ms": 2,
+   "bs": 1,
+   "iw": 1,
+   "tl": 2,
+   "kn": 1,
+   "my": 1,
+   "ml": 3,
+   "uz": 1,
+   "pl": 1,
+   "tr": 1,
+   "si": 2,
+   "am": 1,
+   "sv": 1,
+   "fa": 1,
+   "la": 1,
+   "th": 1
+  },
+  "closed_conf": {
+   "bn": 63,
+   "hi": 6,
+   "as": 8,
+   "te": 16,
+   "mr": 3,
+   "en": 4
+  },
+  "open_acc": 0.54,
+  "closed_acc": 0.63
+ },
+ "indicvoices/hi": {
+  "n": 100,
+  "open_conf": {
+   "hi": 60,
+   "ur": 2,
+   "sd": 1,
+   "bn": 1,
+   "te": 9,
+   "ar": 1,
+   "tr": 2,
+   "ha": 3,
+   "mr": 3,
+   "mk": 1,
+   "tl": 3,
+   "my": 2,
+   "tk": 2,
+   "ro": 1,
+   "ml": 2,
+   "gu": 1,
+   "yi": 1,
+   "ms": 1,
+   "en": 1,
+   "mn": 1,
+   "fo": 1,
+   "sco": 1
+  },
+  "closed_conf": {
+   "hi": 71,
+   "bn": 2,
+   "te": 16,
+   "mr": 8,
+   "as": 2,
+   "en": 1
+  },
+  "open_acc": 0.6,
+  "closed_acc": 0.71
+ },
+ "indicvoices/mr": {
+  "n": 100,
+  "open_conf": {
+   "hi": 5,
+   "mr": 64,
+   "te": 4,
+   "mk": 2,
+   "bn": 2,
+   "gu": 1,
+   "lt": 1,
+   "tk": 2,
+   "mn": 2,
+   "ps": 2,
+   "es": 1,
+   "ml": 4,
+   "la": 1,
+   "iw": 1,
+   "my": 1,
+   "sd": 2,
+   "sw": 1,
+   "ka": 1,
+   "ta": 1,
+   "ur": 1,
+   "hu": 1
+  },
+  "closed_conf": {
+   "hi": 10,
+   "mr": 73,
+   "te": 10,
+   "bn": 2,
+   "as": 4,
+   "en": 1
+  },
+  "open_acc": 0.64,
+  "closed_acc": 0.73
+ },
+ "indicvoices/or": {
+  "n": 100,
+  "open_conf": {
+   "hi": 3,
+   "ne": 11,
+   "sd": 8,
+   "mk": 2,
+   "mr": 5,
+   "gu": 6,
+   "te": 14,
+   "as": 16,
+   "si": 1,
+   "is": 2,
+   "bo": 1,
+   "vi": 1,
+   "ta": 3,
+   "ro": 1,
+   "lt": 1,
+   "ha": 2,
+   "bn": 8,
+   "ml": 1,
+   "sa": 1,
+   "so": 2,
+   "my": 3,
+   "fi": 1,
+   "id": 1,
+   "no": 2,
+   "bg": 1,
+   "th": 1,
+   "fa": 1,
+   "su": 1
+  },
+  "closed_conf": {
+   "hi": 9,
+   "as": 30,
+   "mr": 11,
+   "te": 25,
+   "bn": 23,
+   "en": 2
+  }
+ },
+ "indicvoices/te": {
+  "n": 100,
+  "open_conf": {
+   "te": 78,
+   "el": 1,
+   "be": 1,
+   "lo": 1,
+   "ko": 1,
+   "hu": 1,
+   "hi": 4,
+   "kk": 1,
+   "kn": 1,
+   "tl": 1,
+   "th": 1,
+   "jw": 1,
+   "ha": 1,
+   "mr": 1,
+   "ml": 3,
+   "as": 1,
+   "ne": 1,
+   "uz": 1
+  },
+  "closed_conf": {
+   "te": 92,
+   "bn": 2,
+   "hi": 4,
+   "mr": 1,
+   "as": 1
+  },
+  "open_acc": 0.78,
+  "closed_acc": 0.92
+ },
+ "kathbath/bn": {
+  "n": 100,
+  "open_conf": {
+   "bn": 86,
+   "as": 9,
+   "ne": 1,
+   "mr": 1,
+   "sd": 1,
+   "hi": 2
+  },
+  "closed_conf": {
+   "bn": 87,
+   "as": 9,
+   "te": 1,
+   "mr": 1,
+   "hi": 2
+  },
+  "open_acc": 0.86,
+  "closed_acc": 0.87
+ },
+ "kathbath/hi": {
+  "n": 100,
+  "open_conf": {
+   "hi": 97,
+   "pa": 1,
+   "gu": 1,
+   "ur": 1
+  },
+  "closed_conf": {
+   "hi": 100
+  },
+  "open_acc": 0.97,
+  "closed_acc": 1.0
+ },
+ "kathbath/mr": {
+  "n": 100,
+  "open_conf": {
+   "mr": 89,
+   "ps": 1,
+   "gu": 6,
+   "hi": 3,
+   "as": 1
+  },
+  "closed_conf": {
+   "mr": 95,
+   "hi": 3,
+   "te": 1,
+   "as": 1
+  },
+  "open_acc": 0.89,
+  "closed_acc": 0.95
+ },
+ "kathbath/or": {
+  "n": 100,
+  "open_conf": {
+   "bn": 12,
+   "as": 33,
+   "gu": 18,
+   "ne": 13,
+   "te": 6,
+   "hi": 6,
+   "pa": 2,
+   "mr": 6,
+   "sd": 1,
+   "kn": 2,
+   "nn": 1
+  },
+  "closed_conf": {
+   "bn": 17,
+   "as": 47,
+   "te": 12,
+   "hi": 14,
+   "mr": 10
+  }
+ },
+ "kathbath/te": {
+  "n": 100,
+  "open_conf": {
+   "te": 99,
+   "kn": 1
+  },
+  "closed_conf": {
+   "te": 100
+  },
+  "open_acc": 0.99,
+  "closed_acc": 1.0
+ },
+ "lahaja/hi": {
+  "n": 100,
+  "open_conf": {
+   "ne": 3,
+   "hi": 74,
+   "ka": 1,
+   "id": 2,
+   "ml": 1,
+   "pa": 3,
+   "ur": 3,
+   "br": 1,
+   "as": 4,
+   "th": 1,
+   "bo": 1,
+   "mr": 1,
+   "mt": 1,
+   "ht": 1,
+   "te": 2,
+   "fa": 1
+  },
+  "closed_conf": {
+   "hi": 83,
+   "as": 9,
+   "te": 5,
+   "mr": 3
+  },
+  "open_acc": 0.74,
+  "closed_acc": 0.83
+ },
+ "librispeech/en": {
+  "n": 100,
+  "open_conf": {
+   "en": 97,
+   "be": 1,
+   "cy": 1,
+   "da": 1
+  },
+  "closed_conf": {
+   "en": 100
+  },
+  "open_acc": 0.97,
+  "closed_acc": 1.0
+ },
+ "mucs/bn": {
+  "n": 100,
+  "open_conf": {
+   "bn": 74,
+   "te": 7,
+   "mr": 4,
+   "as": 10,
+   "iw": 1,
+   "ps": 1,
+   "la": 1,
+   "hi": 1,
+   "si": 1
+  },
+  "closed_conf": {
+   "bn": 75,
+   "te": 7,
+   "mr": 4,
+   "as": 10,
+   "en": 2,
+   "hi": 2
+  },
+  "open_acc": 0.74,
+  "closed_acc": 0.75
+ },
+ "mucs/hi": {
+  "n": 100,
+  "open_conf": {
+   "hi": 93,
+   "te": 1,
+   "gu": 3,
+   "bn": 1,
+   "as": 1,
+   "ur": 1
+  },
+  "closed_conf": {
+   "hi": 97,
+   "te": 1,
+   "bn": 1,
+   "as": 1
+  },
+  "open_acc": 0.93,
+  "closed_acc": 0.97
+ },
+ "svarah/en": {
+  "n": 100,
+  "open_conf": {
+   "pl": 1,
+   "en": 8,
+   "br": 1,
+   "as": 21,
+   "bn": 4,
+   "cy": 1,
+   "hi": 14,
+   "hr": 3,
+   "ml": 4,
+   "el": 1,
+   "ko": 1,
+   "tt": 1,
+   "kn": 4,
+   "tl": 1,
+   "ps": 2,
+   "pa": 6,
+   "de": 1,
+   "ur": 1,
+   "hy": 1,
+   "lv": 2,
+   "nn": 1,
+   "iw": 1,
+   "mr": 5,
+   "te": 5,
+   "sl": 1,
+   "ne": 3,
+   "sq": 1,
+   "la": 1,
+   "no": 1,
+   "af": 1,
+   "ms": 1,
+   "ar": 1
+  },
+  "closed_conf": {
+   "mr": 8,
+   "en": 14,
+   "as": 30,
+   "bn": 8,
+   "hi": 26,
+   "te": 14
+  },
+  "open_acc": 0.08,
+  "closed_acc": 0.14
+ }
+}

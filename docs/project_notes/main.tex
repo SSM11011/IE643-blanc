@@ -1,0 +1,165 @@
+\documentclass[11pt,a4paper]{report}
+
+% ------------------------------------------------------------------ engine / fonts (XeTeX via tectonic)
+\usepackage{fontspec}
+\newfontfamily\devafont[Path=/usr/share/fonts/truetype/noto/,Script=Devanagari]{NotoSansDevanagari-Regular.ttf}
+\newfontfamily\bengfont[Path=/usr/share/fonts/truetype/noto/,Script=Bengali]{NotoSansBengali-Regular.ttf}
+\newfontfamily\telufont[Path=/usr/share/fonts/truetype/noto/,Script=Telugu]{NotoSansTelugu-Regular.ttf}
+\newfontfamily\oriyfont[Path=/usr/share/fonts/truetype/noto/,Script=Oriya]{NotoSansOriya-Regular.ttf}
+\newcommand{\deva}[1]{{\devafont #1}}
+\newcommand{\beng}[1]{{\bengfont #1}}
+\newcommand{\telu}[1]{{\telufont #1}}
+\newcommand{\oriy}[1]{{\oriyfont #1}}
+
+% ------------------------------------------------------------------ packages
+\usepackage[margin=2.4cm,headheight=14pt]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools,bm}
+\usepackage{xcolor}
+\usepackage[most]{tcolorbox}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,fit,shapes.geometric,decorations.pathreplacing}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{booktabs,array,tabularx,multirow,makecell,longtable}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{caption}
+\usepackage{listings}
+\usepackage[hidelinks]{hyperref}
+\usepackage{bookmark}
+
+\setlist{itemsep=2pt,topsep=4pt}
+\setlength{\parskip}{4pt}
+\setlength{\parindent}{0pt}
+
+% ------------------------------------------------------------------ colours
+\definecolor{titleblue}{RGB}{52,101,164}
+\definecolor{defc}{RGB}{70,100,170}
+\definecolor{thmc}{RGB}{180,60,60}
+\definecolor{exc}{RGB}{50,130,70}
+\definecolor{hwc}{RGB}{120,70,160}
+\definecolor{intc}{RGB}{200,150,20}
+\definecolor{tipc}{RGB}{210,110,40}
+\definecolor{codec}{RGB}{110,110,110}
+
+% ------------------------------------------------------------------ headings
+\titleformat{\chapter}[display]{\color{titleblue}\normalfont\Huge}{\normalsize Chapter \thechapter}{8pt}{\Huge}
+\titlespacing*{\chapter}{0pt}{0pt}{20pt}
+\titleformat{\section}{\color{titleblue}\normalfont\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\color{titleblue}\normalfont\large\bfseries}{\thesubsection}{1em}{}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\chaptermark}[1]{\markboth{#1}{}}
+\fancyhead[L]{\small IE 643 Project Notes --- Team blanc}
+\fancyhead[R]{\small\nouppercase{\leftmark}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ------------------------------------------------------------------ boxes
+\tcbset{enhanced,breakable,arc=1mm,boxrule=0.6pt,left=6pt,right=6pt,top=4pt,bottom=4pt,fonttitle=\bfseries}
+\newtcbtheorem[number within=chapter]{definition}{Definition}{colback=defc!6,colframe=defc,coltitle=black,colbacktitle=defc!20}{def}
+\newtcbtheorem[use counter from=definition]{theorem}{Theorem}{colback=thmc!5,colframe=thmc,coltitle=black,colbacktitle=thmc!18}{thm}
+\newtcbtheorem[use counter from=definition]{proposition}{Proposition}{colback=thmc!5,colframe=thmc,coltitle=black,colbacktitle=thmc!18}{prop}
+\newtcbtheorem[use counter from=definition]{example}{Worked example}{colback=exc!6,colframe=exc,coltitle=black,colbacktitle=exc!20}{ex}
+\newtcbtheorem[use counter from=definition]{exercise}{Check yourself}{colback=hwc!6,colframe=hwc,coltitle=black,colbacktitle=hwc!20}{exr}
+\newtcolorbox{intuition}[1][]{colback=intc!8,colframe=intc,coltitle=black,colbacktitle=intc!25,title={Intuition#1}}
+\newtcolorbox{vivatip}[1][]{colback=tipc!7,colframe=tipc,coltitle=black,colbacktitle=tipc!22,title={Viva tip#1}}
+\newtcolorbox{incode}[1][]{colback=codec!7,colframe=codec,coltitle=black,colbacktitle=codec!22,title={In the code#1}}
+
+\renewenvironment{proof}[1][Proof]{\par\noindent\textit{#1.}\ }{\hfill$\square$\par}
+
+% ------------------------------------------------------------------ listings
+\lstset{basicstyle=\ttfamily\small,breaklines=true,columns=fullflexible,keepspaces=true,
+  keywordstyle=\color{titleblue}\bfseries,commentstyle=\color{exc!80!black}\itshape,stringstyle=\color{thmc!80!black},
+  frame=single,rulecolor=\color{codec!50},backgroundcolor=\color{codec!4},showstringspaces=false,language=Python}
+
+% ------------------------------------------------------------------ macros
+\newcommand{\file}[1]{\texttt{\detokenize{#1}}}
+\newcommand{\tok}[1]{\texttt{<|#1|>}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\1}{\mathbb{1}}
+\newcommand{\vx}{\bm{x}}
+\newcommand{\vy}{\bm{y}}
+\newcommand{\vh}{\bm{h}}
+\newcommand{\vz}{\bm{z}}
+\newcommand{\blank}{\varnothing}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator{\softmax}{softmax}
+\DeclareMathOperator{\CER}{CER}
+\DeclareMathOperator{\WER}{WER}
+\DeclareMathOperator{\rank}{rank}
+\DeclareMathOperator{\LN}{LN}
+
+% ==================================================================
+\begin{document}
+
+\begin{titlepage}
+\centering
+\vspace*{2.5cm}
+{\color{titleblue}\rule{\linewidth}{1pt}}\\[14pt]
+{\Huge\bfseries One Whisper Model for Seven\\[6pt] Indian Languages\\[10pt]}
+{\Large with Integrated Language Identification\\[10pt]}
+{\large IE 643 Deep Learning --- Course Project, Team \emph{blanc}\\[4pt]
+Complete Explanatory Notes, from First Principles}\\[14pt]
+{\color{titleblue}\rule{\linewidth}{1pt}}\\[1.2cm]
+
+{\large Shibam Sundar Mahakud \quad\textbullet\quad Farhan Al Zayed}\\[1.2cm]
+
+\begin{minipage}{0.86\linewidth}\centering
+Digital audio $\cdot$ log-mel features $\cdot$ WER/CER $\cdot$ Transformers $\cdot$ Whisper $\cdot$ byte-level BPE\\
+Speaker-disjoint splits $\cdot$ balanced sampling $\cdot$ LoRA $\cdot$ vocabulary expansion $\cdot$ CTC\\
+Augmentation $\cdot$ hallucination $\cdot$ bootstrap statistics $\cdot$ calibrated LID $\cdot$ VAD chunking
+\end{minipage}
+
+\vspace{1.4cm}
+\begin{minipage}{0.78\linewidth}\small
+These notes explain the whole project to a reader who knows undergraduate linear algebra, calculus and
+probability, and nothing about speech. Every design decision is derived from its mathematics first and then tied to the exact
+file in \file{src/} that implements it. Every number is taken from the result files in \file{reports/} and \file{runs/}.
+Worked examples are in green boxes, short self-tests (with solutions) are in purple boxes, and pointers into the code are in grey boxes.
+A formula sheet and a list of likely viva questions are at the end.
+\end{minipage}
+
+\vfill
+{\small Box legend:}\\[4pt]
+\tcbox[colback=defc!12,colframe=defc,on line,boxsep=1pt,left=3pt,right=3pt,top=1pt,bottom=1pt]{\small Definition}
+\tcbox[colback=thmc!12,colframe=thmc,on line,boxsep=1pt,left=3pt,right=3pt,top=1pt,bottom=1pt]{\small Theorem / Proposition}
+\tcbox[colback=exc!12,colframe=exc,on line,boxsep=1pt,left=3pt,right=3pt,top=1pt,bottom=1pt]{\small Worked example}
+\tcbox[colback=hwc!12,colframe=hwc,on line,boxsep=1pt,left=3pt,right=3pt,top=1pt,bottom=1pt]{\small Check yourself}\\[3pt]
+\tcbox[colback=intc!15,colframe=intc,on line,boxsep=1pt,left=3pt,right=3pt,top=1pt,bottom=1pt]{\small Intuition}
+\tcbox[colback=tipc!15,colframe=tipc,on line,boxsep=1pt,left=3pt,right=3pt,top=1pt,bottom=1pt]{\small Viva tip}
+\tcbox[colback=codec!12,colframe=codec,on line,boxsep=1pt,left=3pt,right=3pt,top=1pt,bottom=1pt]{\small In the code}\\[0.6cm]
+{\small October 2026}
+\end{titlepage}
+
+\tableofcontents
+
+\input{ch00_howto}
+\input{ch01_problem}
+\input{ch02_audio}
+\input{ch03_metrics}
+\input{ch04_seq2seq}
+\input{ch05_whisper}
+\input{ch06_data}
+\input{ch07_balance}
+\input{ch08_lora}
+\input{ch09_odia}
+\input{ch10_ctc}
+\input{ch11_robust}
+\input{ch12_training}
+\input{ch13_eval}
+\input{ch14_results}
+\input{ch15_svarah}
+\input{ch16_demo}
+\input{ch17_lessons}
+\input{ch18_formulas}
+\appendix
+\input{appA_repro}
+
+\end{document}

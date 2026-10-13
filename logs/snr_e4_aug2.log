@@ -1,0 +1,10 @@
+Loading weights:   0%|          | 0/479 [00:00<?, ?it/s]Loading weights:  75%|███████▍  | 359/479 [00:00<00:00, 3588.00it/s]Loading weights: 100%|██████████| 479/479 [00:00<00:00, 3486.84it/s]
+[transformers] The attention mask is not set with a batched input, and cannot be inferred from input because pad token is same as eos token. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer WhisperTokenizer. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+fleurs hi {'clean': 0.096, 'snr20': 0.102, 'snr15': 0.109, 'snr10': 0.123, 'snr5': 0.156, 'snr0': 0.225, 'reverb': 0.206}
+indicvoices hi {'clean': 0.176, 'snr20': 0.185, 'snr15': 0.196, 'snr10': 0.214, 'snr5': 0.243, 'snr0': 0.474, 'reverb': 0.411}
+fleurs te {'clean': 0.149, 'snr20': 0.164, 'snr15': 0.17, 'snr10': 0.18, 'snr5': 0.195, 'snr0': 0.266, 'reverb': 0.247}
+indicvoices te {'clean': 0.299, 'snr20': 0.229, 'snr15': 0.247, 'snr10': 0.271, 'snr5': 0.373, 'snr0': 0.334, 'reverb': 0.286}
+fleurs as {'clean': 0.188, 'snr20': 0.196, 'snr15': 0.199, 'snr10': 0.195, 'snr5': 0.242, 'snr0': 0.283, 'reverb': 0.276}
+indicvoices as {'clean': 0.276, 'snr20': 0.303, 'snr15': 0.257, 'snr10': 0.3, 'snr5': 0.373, 'snr0': 0.372, 'reverb': 0.392}
+non-speech hallucination rate (>5 tokens): {'hi': 0.9875, 'te': 1.0, 'as': 0.975}

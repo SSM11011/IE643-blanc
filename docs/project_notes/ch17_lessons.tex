@@ -1,0 +1,68 @@
+\chapter{Bugs, Lessons, Limitations and Future Work}
+\chaptermark{Lessons and Limitations}
+\label{ch:lessons}
+
+\section{The bugs that would have changed conclusions}
+
+The project log records 26 bugs. Most were cosmetic or caught before they mattered. These would have changed reported numbers or
+decisions:
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{lYY}
+\toprule
+\# & What was wrong & What it would have done\\
+\midrule
+4 & Official IndicVoices/Kathbath ``valid'' sets share 1{,}217 / 40 speakers with ``train'' & optimistic test numbers (test speakers seen in training)\\
+5 & Baseline decoding capped at 200 new tokens; Indic references reach 650 tokens & truncated outputs, wrong baseline CER\\
+9 & LID-CTC loss not normalised by frames ($\approx$300 at start) & auxiliary loss would swamp the ASR loss\\
+10 & \texttt{begin\_suppress\_tokens} forbids EOT first, so empty output impossible & hallucination stuck near 100\%; led to a wrong diagnosis and an unnecessary 30$\times$ loss weight\\
+11 & 92 ``RIRs'' were noise recordings; multi-mic averaging & reverb augmentation and reverb test partly noise\\
+12 & speed perturbation stretched clips past 30 s while labels stayed full & taught the model to hallucinate cut-off words\\
+13 & random language label on non-speech clips was a target & label noise in both LID outputs\\
+15 & \texttt{convert\_tokens\_to\_ids("<|or|>")} returns EOT silently & Odia evaluation prompted with EOT\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Lessons}
+
+\begin{enumerate}
+\item \textbf{Verify the measurement before the model.} A metric that does not move at all (bug 10) is more often a measurement bug
+than a modelling failure.
+\item \textbf{Check official splits.} ``Valid'' does not mean ``speaker-disjoint''.
+\item \textbf{Silent fallbacks are the dangerous ones.} An unknown token mapped to EOT, a cap of 200 tokens, a noise file in the RIR
+folder: none raised an error.
+\item \textbf{Test a suspicion before acting on it.} The emb-lr sweep showed that the suspected cause of an all-Odia transient was
+wrong (Chapter~\ref{ch:odia}).
+\item \textbf{Make every random choice a function of (seed, epoch, index).} It made resumption exact and refactoring verifiable:
+after the final code cleanup, the test evaluation reproduced all 23 Stage 2 results and all IndicConformer results exactly.
+\item \textbf{Fine-tuning optimises the mixture you give it.} Anything outside it (Indian English) may be forgotten.
+\item \textbf{Unified memory is shared.} Three parallel Whisper-small runs filled 122 GB and all stalled at step 1; runs were made
+sequential.
+\end{enumerate}
+
+\section{Limitations}
+
+\begin{itemize}
+\item $n=100$ per test set and \textbf{one training seed}: bootstrap CIs cover test sampling, not training variance.
+\item One epoch of one deterministic mix; IndicVoices is sub-sampled to 0.5--0.7$\times$ per epoch.
+\item IndicConformer's advantage may be partly in-domain; FLEURS (out of domain for both) shows a smaller gap.
+\item MUCS references mix scripts inconsistently; rCER and sWER are loose comparison metrics, not absolute accuracies.
+\item Digits vs number words are not normalised; parenthesised FLEURS text is dropped (inflates FLEURS CER by 0.005--0.02 for all
+systems).
+\item The robustness test noise comes from the same MUSAN categories as the training noise (held-out files only); no UrbanSound or
+DEMAND test was run. MUSAN ``music'' includes some tracks with vocals, used as empty-target non-speech.
+\item Not done: synthetic Hinglish via TTS, the words-per-second truncation guard (loop rate is already about 0), Voice of India and
+Vistaar benchmarks (not available).
+\end{itemize}
+
+\section{Future work}
+
+\begin{enumerate}
+\item Indian-accented English in training, or a distillation term toward vanilla Whisper on English (Chapter~\ref{ch:svarah}).
+\item A second epoch on a reseeded mix (\texttt{balanced\_mix.py 1}); the dev curve had not flattened.
+\item Test why \tok{or} absorbs LID errors, e.g.\ by also unfreezing the other six language rows with the same mask.
+\item Multiple seeds for the final configuration.
+\item Fix the normaliser's parenthesis rule for FLEURS and verbalise numbers consistently.
+\end{enumerate}

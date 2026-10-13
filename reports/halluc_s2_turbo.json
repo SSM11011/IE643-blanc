@@ -1,0 +1,36 @@
+{
+ "hallucination": {
+  "hi": 0.01,
+  "en": 0.0,
+  "te": 0.01,
+  "as": 0.01,
+  "or": 0.01,
+  "bn": 0.01,
+  "mr": 0.01
+ },
+ "false_silence": {
+  "hi": 0.0,
+  "en": 0.0,
+  "te": 0.0,
+  "as": 0.0,
+  "or": 0.0,
+  "bn": 0.0,
+  "mr": 0.0
+ },
+ "mean_tokens_on_noise": {
+  "hi": 0.57,
+  "en": 0.0,
+  "te": 1.0,
+  "as": 0.98,
+  "or": 1.5,
+  "bn": 1.18,
+  "mr": 0.6
+ },
+ "args": {
+  "model": "../models/whisper-large-v3-turbo",
+  "adapter": "../runs/s2_turbo/adapter",
+  "langs": "hi,en,te,as,or,bn,mr",
+  "n": 100,
+  "out": "../reports/halluc_s2_turbo.json"
+ }
+}

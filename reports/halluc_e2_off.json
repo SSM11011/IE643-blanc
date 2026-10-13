@@ -1,0 +1,23 @@
+{
+ "hallucination": {
+  "hi": 0.98,
+  "te": 1.0,
+  "as": 0.98
+ },
+ "false_silence": {
+  "hi": 0.0,
+  "te": 0.0,
+  "as": 0.0
+ },
+ "mean_tokens_on_noise": {
+  "hi": 152.04,
+  "te": 134.44,
+  "as": 155.36
+ },
+ "args": {
+  "adapter": "../runs/e2_off/adapter",
+  "langs": "hi,te,as",
+  "n": 100,
+  "out": "../reports/halluc_e2_off.json"
+ }
+}

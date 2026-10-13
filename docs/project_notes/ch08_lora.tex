@@ -1,0 +1,122 @@
+\chapter{Parameter-Efficient Fine-Tuning with LoRA}
+\chaptermark{LoRA}
+\label{ch:lora}
+
+\section{The problem with full fine-tuning}
+
+Full fine-tuning updates all 809 M parameters of turbo. AdamW stores two extra numbers per parameter (first and second moments),
+plus gradients, so memory is several times the model size. It also lets the model drift far from what it learned on 680{,}000 hours,
+which risks \emph{catastrophic forgetting} and over-fitting a few hundred hours.
+
+\section{Low-rank adaptation}
+
+\begin{definition}{LoRA (Hu et al., 2021)}{lora}
+Take a frozen linear layer $\bm u\mapsto W_0\bm u$ with $W_0\in\R^{d_{\text{out}}\times d_{\text{in}}}$. LoRA replaces it by
+\[
+\bm u\ \mapsto\ W_0\bm u+\frac{\alpha}{r}\,B A\bm u,\qquad A\in\R^{r\times d_{\text{in}}},\ B\in\R^{d_{\text{out}}\times r},\ r\ll\min(d_{\text{in}},d_{\text{out}}).
+\]
+Only $A$ and $B$ are trained. Initialisation: $A$ random (Kaiming-uniform), $B=0$. Dropout (here 0.05) is applied to $\bm u$ on the
+LoRA branch only.
+\end{definition}
+
+\begin{proposition}{Properties of LoRA}{loraprops}
+\begin{enumerate}
+\item At initialisation the model is exactly the pretrained model.
+\item The update $\Delta W=\frac{\alpha}{r}BA$ has $\rank\Delta W\le r$.
+\item It needs $r(d_{\text{in}}+d_{\text{out}})$ trainable numbers instead of $d_{\text{in}}d_{\text{out}}$.
+\item After training it can be merged, $W=W_0+\frac\alpha rBA$, so inference costs exactly the same as the original model.
+\end{enumerate}
+\end{proposition}
+\begin{proof}
+(1) $B=0\Rightarrow\Delta W=0$. (2) $\mathrm{range}(BA)\subseteq\mathrm{range}(B)$, which has dimension at most $r$.
+(3) Count entries of $A$ and $B$. (4) $W_0\bm u+\frac\alpha rBA\bm u=(W_0+\frac\alpha rBA)\bm u$ by linearity.
+\end{proof}
+
+\begin{proposition}{Gradients and the ``B moves first'' effect}{loragrad}
+Let $\bm g=\partial\mathcal L/\partial\bm o$ be the gradient at the layer output $\bm o=W_0\bm u+\frac\alpha rBA\bm u$. Then
+\[
+\frac{\partial\mathcal L}{\partial B}=\frac\alpha r\,\bm g\,(A\bm u)^\top,\qquad
+\frac{\partial\mathcal L}{\partial A}=\frac\alpha r\,B^\top\bm g\,\bm u^\top .
+\]
+At initialisation ($B=0$) the gradient with respect to $A$ is zero, and only $B$ changes in the first step.
+\end{proposition}
+\begin{proof}
+$\bm o$ depends on $B$ through $\frac\alpha r B\bm v$ with $\bm v=A\bm u$; $\partial(\bm g^\top B\bm v)/\partial B=\bm g\bm v^\top$.
+Similarly $\bm g^\top BA\bm u=(B^\top\bm g)^\top A\bm u$ gives $\partial/\partial A=B^\top\bm g\,\bm u^\top$. With $B=0$ this vanishes.
+\end{proof}
+
+\begin{intuition}[: why low rank is enough]
+Adapting a pretrained model to a related task seems to need only a few new ``directions'' in each layer: the pretrained features are
+already rich. The ratio $\alpha/r$ fixes the scale of the update so that changing $r$ does not require re-tuning the learning rate.
+Here $\alpha/r=64/32=2$.
+\end{intuition}
+
+\section{Where LoRA goes, and the exact parameter count}
+
+LoRA is applied to every attention projection (\texttt{q\_proj, k\_proj, v\_proj, out\_proj}) and both MLP matrices (\texttt{fc1,
+fc2}) in every encoder and decoder layer, with $r=32$, $\alpha=64$. In addition the bottom third of encoder layers is frozen:
+$\lfloor 32\times0.33\rfloor=10$ layers, so their LoRA matrices are not trained either (lower encoder layers are largely
+language-independent acoustic feature extractors; freezing them reduces over-fitting).
+
+\begin{example}{Counting the 86{,}880{,}008 ``trainable'' parameters of Stage 2}{count}
+Turbo: $d=1280$, MLP width $5120$. One LoRA pair on a $d_{\text{out}}\times d_{\text{in}}$ matrix costs $32(d_{\text{in}}+d_{\text{out}})$.
+\begin{itemize}
+\item Attention projection ($1280\to1280$): $32\cdot2560=81{,}920$.\quad \texttt{fc1} or \texttt{fc2}: $32\cdot(1280+5120)=204{,}800$.
+\item Encoder layer: $4\cdot81{,}920+2\cdot204{,}800=737{,}280$. Trainable encoder layers: $32-10=22$, giving $16{,}220{,}160$.
+\item Decoder layer: self-attention and cross-attention ($8$ projections) $+$ MLP: $8\cdot81{,}920+2\cdot204{,}800=1{,}064{,}960$.
+Four layers: $4{,}259{,}840$.
+\item LoRA total: $\mathbf{20{,}480{,}000}$.
+\item Embedding matrix with the Odia row: $51{,}867\times1280=66{,}389{,}760$ (counted because \texttt{requires\_grad=True}, although a
+gradient mask lets only one row of 1{,}280 numbers change; Chapter~\ref{ch:odia}).
+\item LID-CTC head: $1280\times8+8=10{,}248$.
+\end{itemize}
+Sum: $20{,}480{,}000+66{,}389{,}760+10{,}248=86{,}880{,}008$, exactly the 86.9 M printed in the training log. The parameters that
+\emph{actually} change are $20{,}480{,}000+1{,}280+10{,}248\approx$ \textbf{20.5 M}, about 2.5\% of the model.
+\end{example}
+
+\begin{exercise}{Whisper-small's 13.0 M}{countsmall}
+Whisper-small: $d=768$, MLP $3072$, 12 encoder and 12 decoder layers, nothing frozen. Verify the 13.0 M trainable parameters of E1.\par
+\textit{Solution.} Attention pair: $32\cdot1536=49{,}152$; MLP pair: $32\cdot3840=122{,}880$. Encoder layer:
+$4\cdot49{,}152+2\cdot122{,}880=442{,}368$; decoder layer: $8\cdot49{,}152+2\cdot122{,}880=638{,}976$.
+Total $12(442{,}368+638{,}976)=12{,}976{,}128\approx13.0$ M.
+\end{exercise}
+
+\section{QLoRA}
+
+QLoRA stores the frozen $W_0$ in 4 bits (the NF4 data type: 16 quantisation levels placed at quantiles of a normal distribution,
+which suits roughly Gaussian weights, with per-block scales that are themselves quantised: ``double quantisation''). Matrix products
+de-quantise to bfloat16 on the fly. Memory for $W_0$ drops about 4$\times$; LoRA matrices stay in higher precision.
+
+\section{Experiment E1: LoRA vs QLoRA vs full fine-tuning}
+
+Whisper-small, Hindi only, 1{,}000 steps, batch 32; dev CER (FLEURS / IndicVoices / Kathbath). Untrained: 0.49 / 1.39 / 0.72.
+
+\begin{center}
+\begin{tabular}{lccccc}
+\toprule
+Method & trainable & time (min) & FLEURS & IndicVoices & Kathbath\\
+\midrule
+LoRA ($r=32$) & 13.0 M & 32 & 0.095 & \textbf{0.108} & \textbf{0.125}\\
+QLoRA (NF4) & 13.0 M & 76 & \textbf{0.092} & 0.114 & 0.127\\
+Full fine-tune (lr $10^{-5}$) & 241.7 M & 28 & 0.101 & 0.173 & 0.143\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{itemize}
+\item QLoRA matches LoRA but is 2.3$\times$ slower (de-quantisation overhead), and memory was not the constraint on a 122 GB machine.
+\item Full fine-tuning is clearly worse on the spontaneous IndicVoices set (0.173 vs 0.108), consistent with over-fitting the
+read-speech-heavy data and drifting from the pretrained acoustic model. (Caveat: its learning rate was not tuned.)
+\end{itemize}
+Decision: \textbf{LoRA}.
+
+\begin{incode}
+\file{train_whisper.py}: \texttt{LoraConfig(r=32, lora\_alpha=64, lora\_dropout=0.05, target\_modules=[q\_proj, k\_proj, v\_proj,
+out\_proj, fc1, fc2])}, then \texttt{--freeze\_enc\_frac 0.33} sets \texttt{requires\_grad=False} on all parameters (including
+LoRA) of encoder layers 0--9. \file{load_ft.py} loads the adapter and calls \texttt{merge\_and\_unload()} (Proposition~\ref{prop:loraprops}(4)).
+\end{incode}
+
+\begin{vivatip}
+Be ready to say why the reported ``87 M trainable'' overstates what is learned: 66.4 M of it is the embedding matrix, of which only
+the Odia row can change. The honest figure is about 20.5 M.
+\end{vivatip}

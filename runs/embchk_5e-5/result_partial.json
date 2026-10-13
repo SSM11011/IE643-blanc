@@ -1,0 +1,187 @@
+{
+ "args": {
+  "model": "/home/shibam/IE643/models/whisper-small",
+  "name": "embchk_5e-5",
+  "mode": "lora",
+  "langs": "hi,en,te,as,or,bn,mr",
+  "cs": true,
+  "manifest": "/home/shibam/IE643/data/processed/splits/train_mix_epoch0.jsonl",
+  "steps": 400,
+  "bs": 32,
+  "lr": null,
+  "warmup": 0.1,
+  "r": 32,
+  "alpha": 64,
+  "workers": 12,
+  "eval_n": 48,
+  "eval_start": false,
+  "freeze_enc_frac": 0.33,
+  "seed": 0,
+  "no_compile": false,
+  "lid_ctc": 0.3,
+  "lid_detach": false,
+  "aug": true,
+  "ns_weight": 1.0,
+  "nonspeech": 0.05,
+  "emb_lr": 5e-05,
+  "save_every": 0,
+  "eval_every": 200,
+  "resume": false
+ },
+ "lr": 0.0005,
+ "trainable_M": 51.488264,
+ "eval_step200": {
+  "fleurs/as": {
+   "cer": 0.28202798473559876,
+   "wer": 0.7686996547756041,
+   "lid_acc": 0.8541666666666666,
+   "lid_acc_head": 0.0,
+   "loop_rate": 0.020833333333333332,
+   "n": 48
+  },
+  "fleurs/bn": {
+   "cer": 0.23831544178364988,
+   "wer": 0.7153679653679653,
+   "lid_acc": 1.0,
+   "lid_acc_head": 0.9791666666666666,
+   "loop_rate": 0.0625,
+   "n": 48
+  },
+  "fleurs/en": {
+   "cer": 0.045550474850510024,
+   "wer": 0.09221311475409837,
+   "lid_acc": 1.0,
+   "lid_acc_head": 0.2708333333333333,
+   "loop_rate": 0.0,
+   "n": 48
+  },
+  "fleurs/hi": {
+   "cer": 0.16396720655868827,
+   "wer": 0.3864077669902913,
+   "lid_acc": 0.9791666666666666,
+   "lid_acc_head": 1.0,
+   "loop_rate": 0.0,
+   "n": 48
+  },
+  "fleurs/mr": {
+   "cer": 0.2346652646337189,
+   "wer": 0.7284533648170012,
+   "lid_acc": 0.9583333333333334,
+   "lid_acc_head": 0.125,
+   "loop_rate": 0.0,
+   "n": 48
+  },
+  "fleurs/or": {
+   "cer": 0.28533945555919976,
+   "wer": 0.7801724137931034,
+   "lid_acc": 0.0,
+   "lid_acc_head": 0.1875,
+   "loop_rate": 0.14583333333333334,
+   "n": 48
+  },
+  "fleurs/te": {
+   "cer": 0.24984690753214941,
+   "wer": 0.7978723404255319,
+   "lid_acc": 1.0,
+   "lid_acc_head": 0.9583333333333334,
+   "loop_rate": 0.0,
+   "n": 48
+  },
+  "indicvoices/as": {
+   "cer": 0.6326530612244898,
+   "wer": 1.16390423572744,
+   "lid_acc": 0.4791666666666667,
+   "lid_acc_head": 0.0,
+   "loop_rate": 0.0625,
+   "n": 48
+  },
+  "indicvoices/bn": {
+   "cer": 0.5156562291805463,
+   "wer": 0.933572710951526,
+   "lid_acc": 0.6666666666666666,
+   "lid_acc_head": 0.2916666666666667,
+   "loop_rate": 0.08333333333333333,
+   "n": 48
+  },
+  "indicvoices/hi": {
+   "cer": 0.26956986374565856,
+   "wer": 0.5791962174940898,
+   "lid_acc": 0.9583333333333334,
+   "lid_acc_head": 0.9166666666666666,
+   "loop_rate": 0.0,
+   "n": 48
+  },
+  "indicvoices/mr": {
+   "cer": 0.3328125,
+   "wer": 0.7666232073011734,
+   "lid_acc": 0.7291666666666666,
+   "lid_acc_head": 0.020833333333333332,
+   "loop_rate": 0.041666666666666664,
+   "n": 48
+  },
+  "indicvoices/or": {
+   "cer": 0.5128730251609128,
+   "wer": 1.003338898163606,
+   "lid_acc": 0.020833333333333332,
+   "lid_acc_head": 0.4583333333333333,
+   "loop_rate": 0.14583333333333334,
+   "n": 48
+  },
+  "indicvoices/te": {
+   "cer": 0.43928750627195184,
+   "wer": 0.8752166377816292,
+   "lid_acc": 0.8958333333333334,
+   "lid_acc_head": 0.7916666666666666,
+   "loop_rate": 0.10416666666666667,
+   "n": 48
+  },
+  "kathbath/bn": {
+   "cer": 0.19802276812462552,
+   "wer": 0.6050583657587548,
+   "lid_acc": 1.0,
+   "lid_acc_head": 0.9166666666666666,
+   "loop_rate": 0.020833333333333332,
+   "n": 48
+  },
+  "kathbath/hi": {
+   "cer": 0.20774647887323944,
+   "wer": 0.5646630236794171,
+   "lid_acc": 0.9583333333333334,
+   "lid_acc_head": 0.9583333333333334,
+   "loop_rate": 0.0,
+   "n": 48
+  },
+  "kathbath/mr": {
+   "cer": 0.2480225988700565,
+   "wer": 0.7729831144465291,
+   "lid_acc": 0.8541666666666666,
+   "lid_acc_head": 0.1875,
+   "loop_rate": 0.0,
+   "n": 48
+  },
+  "kathbath/or": {
+   "cer": 0.2215550885619934,
+   "wer": 0.7165354330708661,
+   "lid_acc": 0.20833333333333334,
+   "lid_acc_head": 0.5625,
+   "loop_rate": 0.0,
+   "n": 48
+  },
+  "kathbath/te": {
+   "cer": 0.2662369856222112,
+   "wer": 0.8304093567251462,
+   "lid_acc": 1.0,
+   "lid_acc_head": 0.9583333333333334,
+   "loop_rate": 0.020833333333333332,
+   "n": 48
+  },
+  "librispeech/en": {
+   "cer": 0.014941302027748132,
+   "wer": 0.04628330995792426,
+   "lid_acc": 1.0,
+   "lid_acc_head": 0.10416666666666667,
+   "loop_rate": 0.0,
+   "n": 48
+  }
+ }
+}

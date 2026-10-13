@@ -1,0 +1,240 @@
+\chapter{Results}
+\chaptermark{Results}
+\label{ch:results}
+
+All numbers: held-out test split, 100 utterances per set, the same utterances for every system (Chapter~\ref{ch:eval}).
+Sources: \file{reports/experiments.md}, \file{reports/analysis.md} and\\ \file{reports/baselines/summary.md}.
+
+\section{Speech recognition: the full table}
+
+``Oracle'' = true language token forced; ``pred.'' = the model's own LID decides. ``+fixes'' = the two decode-time fixes of
+Chapter~\ref{ch:svarah} (they change only English decoding and the LID decision).
+
+\begin{center}
+\small
+\begin{tabular}{lcccccc}
+\toprule
+ & \multicolumn{2}{c}{Baselines (CER)} & \multicolumn{3}{c}{Stage 2 (CER)} & \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-6}
+Set & vanilla turbo & IndicConformer & oracle & pred. & +fixes, pred. & token-LID\\
+\midrule
+FLEURS as & 1.204 & 0.063 & 0.084 & 0.085 & 0.084 & 0.98\\
+FLEURS bn & 0.482 & 0.078 & 0.094 & 0.094 & 0.094 & 1.00\\
+FLEURS hi & 0.127 & 0.065 & 0.077 & 0.077 & 0.077 & 1.00\\
+FLEURS mr & 0.251 & 0.063 & 0.075 & 0.080 & 0.080 & 0.99\\
+FLEURS or & 1.023 & 0.065 & 0.145 & 0.145 & 0.145 & 1.00\\
+FLEURS te & 0.489 & 0.087 & 0.086 & 0.086 & 0.086 & 1.00\\
+FLEURS en & 0.036 & -- & 0.042 & 0.042 & 0.042 & 1.00\\
+\midrule
+IndicVoices as & 2.601 & 0.055 & 0.164 & 0.224 & 0.186 & 0.66\\
+IndicVoices bn & 1.185 & 0.061 & 0.119 & 0.159 & 0.143 & 0.77\\
+IndicVoices hi & 0.321 & 0.068 & 0.107 & 0.119 & 0.120 & 0.81\\
+IndicVoices mr & 0.716 & 0.060 & 0.124 & 0.140 & 0.140 & 0.85\\
+IndicVoices or & 2.046 & 0.104 & 0.196 & 0.223 & 0.223 & 0.75\\
+IndicVoices te & 1.116 & 0.081 & 0.203 & 0.209 & 0.209 & 0.95\\
+\midrule
+Kathbath bn & 0.505 & 0.021 & 0.044 & 0.052 & 0.052 & 0.99\\
+Kathbath hi & 0.116 & 0.029 & 0.055 & 0.061 & 0.061 & 0.99\\
+Kathbath mr & 0.240 & 0.029 & 0.065 & 0.066 & 0.066 & 0.99\\
+Kathbath or & 1.299 & 0.026 & 0.041 & 0.041 & 0.041 & 1.00\\
+Kathbath te & 0.371 & 0.037 & 0.060 & 0.060 & 0.060 & 1.00\\
+\midrule
+Lahaja hi & 0.259 & 0.038 & 0.064 & 0.152 & 0.147 & 0.77\\
+LibriSpeech en & 0.014 & -- & 0.008 & 0.008 & 0.008 & 1.00\\
+Svarah en & \textbf{0.032} & -- & 0.227 & 0.737 & 0.311 & 0.13\\
+MUCS hi--en & 0.512 & 0.545 & \textbf{0.306} & 0.306 & 0.306 & 1.00\\
+MUCS bn--en & 1.053 & 0.501 & \textbf{0.213} & 0.213 & 0.213 & 1.00\\
+\midrule
+\textbf{Mean (23 sets)} & 0.696 & (0.104 over 20) & \textbf{0.113} & 0.147 & \textbf{0.126} & \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{axis}[ybar,width=\linewidth,height=6.2cm,bar width=4pt,ymin=0,ymax=0.7,ytick={0,0.2,0.4,0.6},ylabel={CER},
+  symbolic x coords={FL-as,FL-bn,FL-hi,FL-mr,FL-or,FL-te,IV-as,IV-bn,IV-hi,IV-mr,IV-or,IV-te,KB-bn,KB-hi,KB-mr,KB-or,KB-te,LA-hi,MU-hi,MU-bn},
+  xtick=data,x tick label style={rotate=60,anchor=east,font=\scriptsize},legend style={at={(0.5,1.06)},anchor=south,legend columns=3,font=\footnotesize},
+  enlarge x limits=0.03,restrict y to domain*=0:0.6]
+\addplot[fill=codec!50,draw=codec] coordinates {(FL-as,0.6)(FL-bn,0.482)(FL-hi,0.127)(FL-mr,0.251)(FL-or,0.6)(FL-te,0.489)(IV-as,0.6)(IV-bn,0.6)(IV-hi,0.321)(IV-mr,0.6)(IV-or,0.6)(IV-te,0.6)(KB-bn,0.505)(KB-hi,0.116)(KB-mr,0.240)(KB-or,0.6)(KB-te,0.371)(LA-hi,0.259)(MU-hi,0.512)(MU-bn,0.6)};
+\addplot[fill=exc!60,draw=exc] coordinates {(FL-as,0.063)(FL-bn,0.078)(FL-hi,0.065)(FL-mr,0.063)(FL-or,0.065)(FL-te,0.087)(IV-as,0.055)(IV-bn,0.061)(IV-hi,0.068)(IV-mr,0.060)(IV-or,0.104)(IV-te,0.081)(KB-bn,0.021)(KB-hi,0.029)(KB-mr,0.029)(KB-or,0.026)(KB-te,0.037)(LA-hi,0.038)(MU-hi,0.545)(MU-bn,0.501)};
+\addplot[fill=titleblue!70,draw=titleblue] coordinates {(FL-as,0.084)(FL-bn,0.094)(FL-hi,0.077)(FL-mr,0.075)(FL-or,0.145)(FL-te,0.086)(IV-as,0.164)(IV-bn,0.119)(IV-hi,0.107)(IV-mr,0.124)(IV-or,0.196)(IV-te,0.203)(KB-bn,0.044)(KB-hi,0.055)(KB-mr,0.065)(KB-or,0.041)(KB-te,0.060)(LA-hi,0.064)(MU-hi,0.306)(MU-bn,0.213)};
+\legend{vanilla turbo (clipped at 0.6),IndicConformer-600M,Stage 2 (oracle)}
+\end{axis}
+\end{tikzpicture}
+\caption{Indic and code-switched test sets. Grey bars at 0.6 are clipped; the true values are above 1 (repetition loops).}
+\end{figure}
+
+\subsection*{What the table says}
+\begin{enumerate}
+\item \textbf{Fine-tuning turns an unusable model into a usable one} on every Indic set: mean CER 0.696 $\to$ 0.113. Every vanilla
+CER above 1 was a loop.
+\item \textbf{Odia works} through the new token (Kathbath 0.041, FLEURS 0.145). FLEURS Odia is the weakest FLEURS language; it has
+the least FLEURS training data (3.4 h).
+\item \textbf{English is preserved} on read speech (LibriSpeech 0.014 $\to$ 0.008; FLEURS 0.036 $\to$ 0.042) but \textbf{broken on
+Indian-accented English} (Svarah 0.032 $\to$ 0.227). Chapter~\ref{ch:svarah} is devoted to this.
+\item \textbf{IndicConformer is better on monolingual in-domain sets.} The paired bootstrap interval excludes 0 on 17 of the 18
+monolingual Indic sets (all except FLEURS Telugu; FLEURS Hindi only just). The gap is largest on IndicVoices (0.04--0.12). Two caveats:
+IndicConformer was trained on far more AI4Bharat data from the \emph{same sources} as IndicVoices and Kathbath, and it has no
+English, no LID and no code-switch ability. On FLEURS, which is out of domain for both, the gap is small (0.01--0.02 except Odia).
+\item \textbf{Code-switching: Stage 2 is clearly best} (MUCS hi 0.306 vs 0.545, bn 0.213 vs 0.501), significant in the paired test.
+\end{enumerate}
+
+\section{The cost of LID errors}
+
+Mean CER: oracle 0.113, predicted 0.147, predicted with the calibrated rule 0.126. Without Svarah the routing cost is small almost
+everywhere; it is large exactly where LID is weak:
+
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+Set & oracle & predicted (+fixes) & gap\\
+\midrule
+Lahaja hi & 0.064 & 0.147 & $+0.083$\\
+IndicVoices as & 0.164 & 0.186 & $+0.022$\\
+IndicVoices bn & 0.119 & 0.143 & $+0.024$\\
+Svarah en & 0.227 (0.114 ASCII) & 0.311 & $+0.197$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Language identification}
+
+Pooled recall over all test sets (rows: true language):
+
+\begin{center}
+\small
+\begin{tabular}{lccccc}
+\toprule
+Language & vanilla token & ECAPA (closed set) & Stage 2 token & Stage 2 head & Stage 2 calibrated\\
+\midrule
+hi & 0.84 & 0.90 & 0.91 & 0.91 & 0.91\\
+en & 1.00 & 0.71 & 0.71 & 0.75 & \textbf{0.84}\\
+te & 0.14 & 0.97 & 0.98 & 0.98 & 0.98\\
+as & 0.00 & 0.92 & 0.82 & 0.92 & 0.89\\
+or & no token & no class & 0.92 & 0.90 & 0.92\\
+bn & 0.42 & 0.81 & 0.94 & 0.94 & 0.94\\
+mr & 0.52 & 0.89 & 0.94 & 0.93 & 0.94\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Confusion matrix of the Stage 2 decoder token (counts; rows true, columns predicted):
+
+\begin{center}
+\begin{tabular}{l|ccccccc|c}
+ & hi & en & te & as & or & bn & mr & recall\\\hline
+hi & \textbf{457} & $\cdot$ & 7 & 1 & 17 & 3 & 15 & 0.91\\
+en & 26 & \textbf{213} & 21 & 1 & 15 & 16 & 8 & 0.71\\
+te & $\cdot$ & $\cdot$ & \textbf{295} & $\cdot$ & 4 & $\cdot$ & 1 & 0.98\\
+as & 3 & $\cdot$ & 4 & \textbf{164} & 22 & 7 & $\cdot$ & 0.82\\
+or & 9 & $\cdot$ & 8 & $\cdot$ & \textbf{275} & 1 & 7 & 0.92\\
+bn & 5 & $\cdot$ & 5 & $\cdot$ & 11 & \textbf{376} & 3 & 0.94\\
+mr & 3 & $\cdot$ & 3 & $\cdot$ & 5 & 6 & \textbf{283} & 0.94\\
+\end{tabular}
+\end{center}
+
+\begin{itemize}
+\item FLEURS, Kathbath, LibriSpeech and MUCS sets are at 0.98--1.00. Errors concentrate in spontaneous IndicVoices (0.66--0.95),
+Lahaja (0.77) and Svarah.
+\item \textbf{Excluding Svarah, English recall is 1.00} (200/200). All 87 English errors are Indian-accented English, spread over
+every Indic language.
+\item The \tok{or} column absorbs errors (17 hi, 22 as, 15 en, 11 bn), as discussed in Chapter~\ref{ch:odia}.
+\item The LID head helps most on Assamese (0.82 $\to$ 0.92); the calibrated rule combines both opinions plus an English bias.
+\item Against the dedicated ECAPA LID model, Stage 2 is equal or better on every Indic language and also covers Odia. ECAPA fails on
+Indian English in exactly the same way (Svarah 0.14), which suggests the difficulty is intrinsic to accented English, not to our
+model alone.
+\end{itemize}
+
+\section{Robustness}
+
+\paragraph{Hallucination} (Stage 2, 100 held-out noise/music clips per language): 0.01, 0.00, 0.01, 0.01, 0.01, 0.01, 0.01 for
+hi, en, te, as, or, bn, mr; mean output tokens on noise 0--1.5; false silence on real speech 0.00 in all languages. Vanilla: about
+1.0.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=0.9\linewidth,height=6cm,xlabel={condition},ylabel={CER},
+  symbolic x coords={clean,20 dB,15 dB,10 dB,5 dB,0 dB,reverb},xtick=data,ymin=0,ymax=0.32,grid=major,grid style={gray!20},
+  legend style={at={(0.5,-0.22)},anchor=north,font=\footnotesize},legend columns=3]
+\addplot[thick,mark=*,color=titleblue] coordinates {(clean,0.056)(20 dB,0.059)(15 dB,0.061)(10 dB,0.068)(5 dB,0.085)(0 dB,0.130)(reverb,0.064)};
+\addplot[thick,mark=square*,color=thmc] coordinates {(clean,0.108)(20 dB,0.116)(15 dB,0.116)(10 dB,0.123)(5 dB,0.138)(0 dB,0.172)(reverb,0.119)};
+\addplot[thick,mark=triangle*,color=exc] coordinates {(clean,0.093)(20 dB,0.096)(15 dB,0.098)(10 dB,0.106)(5 dB,0.109)(0 dB,0.159)(reverb,0.104)};
+\addplot[thick,mark=diamond*,color=hwc] coordinates {(clean,0.102)(20 dB,0.117)(15 dB,0.128)(10 dB,0.150)(5 dB,0.216)(0 dB,0.295)(reverb,0.151)};
+\addplot[thick,dashed,mark=*,color=titleblue] coordinates {(clean,0.131)(20 dB,0.137)(15 dB,0.147)(10 dB,0.148)(5 dB,0.175)(0 dB,0.213)(reverb,0.170)};
+\addplot[thick,dashed,mark=diamond*,color=hwc] coordinates {(clean,0.186)(20 dB,0.206)(15 dB,0.216)(10 dB,0.226)(5 dB,0.245)(0 dB,0.304)(reverb,0.222)};
+\legend{FLEURS hi,FLEURS te,FLEURS as,FLEURS or,IndicVoices hi,IndicVoices or}
+\end{axis}
+\end{tikzpicture}
+\caption{Stage 2 under held-out noise (60 utterances per set, \file{reports/snr_s2_turbo.json}). Degradation is gradual; Odia is the
+most noise-sensitive. Compare vanilla Whisper-small on FLEURS hi: 0.357 clean, 0.806 at 0 dB.}
+\end{figure}
+
+\section{Code-switching with the tolerant metrics}
+
+\begin{center}
+\begin{tabular}{llccc}
+\toprule
+System & set & CER & rCER & sWER\\
+\midrule
+Stage 2 & MUCS hi & \textbf{0.306} & \textbf{0.251} & \textbf{0.294}\\
+IndicConformer & MUCS hi & 0.545 & 0.367 & 0.387\\
+vanilla turbo & MUCS hi & 0.512 & 0.366 & 0.409\\
+Qwen3-ASR-1.7B & MUCS hi & 0.482 & 0.306 & 0.316\\
+Qwen3-ASR-0.6B & MUCS hi & 0.417 & 0.307 & 0.356\\
+\midrule
+Stage 2 & MUCS bn & \textbf{0.213} & \textbf{0.173} & \textbf{0.254}\\
+IndicConformer & MUCS bn & 0.501 & 0.326 & 0.439\\
+vanilla turbo & MUCS bn & 1.053 & 0.749 & 1.382\\
+\bottomrule
+\end{tabular}
+\end{center}
+The ranking survives the script-tolerant metrics, so Stage 2's advantage is not an artefact of choosing the same script as the
+references.
+
+\section{Against Qwen3-ASR on Hindi and English}
+
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+Set & Qwen3-0.6B & Qwen3-1.7B & Stage 2 oracle & Stage 2 +fixes pred.\\
+\midrule
+FLEURS hi & 0.107 & 0.068 & 0.077 & 0.077\\
+IndicVoices hi & 0.144 & 0.100 & 0.107 & 0.120\\
+Kathbath hi & 0.077 & \textbf{0.044} & 0.055 & 0.061\\
+Lahaja hi & 0.118 & 0.076 & 0.064 & 0.147\\
+MUCS hi--en & 0.417 & 0.482 & \textbf{0.306} & 0.306\\
+FLEURS en & 0.036 & \textbf{0.027} & 0.042 & 0.042\\
+LibriSpeech en & 0.008 & 0.006 & 0.008 & 0.008\\
+Svarah en & 0.134 & \textbf{0.101} & 0.227 (0.114 ASCII) & 0.311\\
+\bottomrule
+\end{tabular}
+\end{center}
+Paired tests vs Stage 2 (oracle): Qwen3-1.7B is significantly better on Kathbath hi, FLEURS en and Svarah; not significantly
+different on FLEURS hi, IndicVoices hi and Lahaja; significantly worse on MUCS hi. Stage 2 is significantly better than Qwen3-0.6B
+on all Hindi sets. A 1.7B model trained for Hindi and English is level with our 7-language model on monolingual Hindi and clearly
+behind on code-switching.
+
+\section{Summary in the ML-SUPERB style}
+
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+System & sets & mean CER & worst set & std\\
+\midrule
+Stage 2 (oracle) & 23 & 0.113 & MUCS hi 0.306 & 0.072\\
+Stage 2 + fixes (pred.) & 23 & 0.126 & Svarah 0.311 & 0.081\\
+Stage 2 (pred., no fixes) & 23 & 0.147 & Svarah 0.737 & 0.145\\
+vanilla turbo & 23 & 0.696 & IndicVoices as 2.601 & 0.650\\
+IndicConformer & 20 & 0.104 & MUCS hi 0.545 & 0.142\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{vivatip}[: the one-sentence summary]
+``One 809 M-parameter Whisper with 20 M trained LoRA parameters, a new Odia token and an encoder LID head transcribes seven
+languages at a mean CER of 0.113 (0.126 with its own LID), almost never hallucinates on noise, beats every baseline on code-switched
+speech, trails the in-domain Indic specialist on monolingual Indic speech, and regressed on Indian-accented English.''
+\end{vivatip}

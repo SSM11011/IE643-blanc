@@ -1,0 +1,23 @@
+{
+ "hallucination": {
+  "hi": 0.0,
+  "te": 0.0,
+  "as": 0.0
+ },
+ "false_silence": {
+  "hi": 0.0,
+  "te": 0.0,
+  "as": 0.01
+ },
+ "mean_tokens_on_noise": {
+  "hi": 0.0,
+  "te": 0.0,
+  "as": 0.0
+ },
+ "args": {
+  "adapter": "../runs/e4_aug2/adapter",
+  "langs": "hi,te,as",
+  "n": 100,
+  "out": "../reports/halluc_e4_aug2.json"
+ }
+}
